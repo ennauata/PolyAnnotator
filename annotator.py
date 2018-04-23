@@ -3,20 +3,11 @@ import os
 from functools import partial
 import numpy as np
 
-try:
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-    from PyQt5.QtWidgets import *
-except ImportError:
-    # needed for py3+qt4
-    # Ref:
-    # http://pyqt.sourceforge.net/Docs/PyQt4/incompatible_apis.html
-    # http://stackoverflow.com/questions/21217399/pyqt4-qtcore-qvariant-object-instead-of-a-string
-    if sys.version_info.major >= 3:
-        import sip
-        sip.setapi('QVariant', 2)
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import *
+if sys.version_info.major >= 3:
+    import sip
+    sip.setapi('QVariant', 2)
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 import resources
 # Add internal libs
@@ -44,6 +35,10 @@ class MainWindow(QMainWindow):
         settings = self.settings
 
         self.dataFolder = '../data/'
+        self.zoomWidget = ZoomWidget()
+
+        self.canvas = Canvas()
+        self.setCentralWidget(self.canvas)
 
         # Create a widget for edit and diffc button
         # self.diffcButton = QCheckBox(u'difficult')
@@ -53,9 +48,7 @@ class MainWindow(QMainWindow):
         # self.editButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
 
-        self.zoomWidget = ZoomWidget()
 
-        self.canvas = Canvas()
         #self.canvas.coordinatesChanged.connect(self.centerChanged)
         #self.canvas.reloadAnnotation.connect(self.reloadAnnotation)
         #self.canvas.zoomRequest.connect(self.zoomRequest)
@@ -64,7 +57,7 @@ class MainWindow(QMainWindow):
         # scroll.setWidget(self.canvas)
         # scroll.setWidgetResizable(True)
         # self.setCentralWidget(scroll)
-        self.setCentralWidget(self.canvas)
+        
         #self.canvas.resize(self.canvas.sizeHint())
 
         action = partial(newAction, self)
@@ -90,13 +83,6 @@ class MainWindow(QMainWindow):
 
         self.queueEvent(self.loadImage)
 
-
-    def paintCanvas(self):
-        #assert not self.image.isNull(), "cannot paint null image"
-        self.canvas.adjustSize()
-        self.canvas.update()
-        return
-
     def moveToNextUnannotated(self):
         for sceneIndex, scenePath in enumerate(self.scenePaths[self.sceneIndex + 1:]):
             if not os.path.exists(self.dataFolder + '/' + scenePath + '/corners/'):
@@ -108,6 +94,12 @@ class MainWindow(QMainWindow):
 
     def moveToNext(self):
         self.sceneIndex = min(self.sceneIndex + 1, len(self.scenePaths))
+        return
+
+    def paintCanvas(self):
+        #assert not self.image.isNull(), "cannot paint null image"
+        self.canvas.adjustSize()
+        self.canvas.update()
         return
 
     def loadImage(self):
@@ -124,22 +116,18 @@ class MainWindow(QMainWindow):
 
 
 def get_main_app(argv=[]):
-    """
-    Standard boilerplate Qt application code.
-    Do everything but app.exec_() -- so that we can test the application in one thread
-    """
+
+    # main loop
     app = QApplication(argv)
     app.setApplicationName(__appname__)
     app.setWindowIcon(newIcon("app"))
-    # Tzutalin 201705+: Accept extra agruments to change predefined class file
-    # Usage : labelImg.py image predefClassFile
     win = MainWindow()
     win.show()
     return app, win
 
 
 def main(argv=[]):
-    '''construct main app and run it'''
+    # construct app and run it
     app, _win = get_main_app(argv)
     return app.exec_()
 

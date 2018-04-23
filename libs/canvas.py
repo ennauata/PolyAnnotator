@@ -210,21 +210,21 @@ class Canvas(QWidget):
         p.setRenderHint(QPainter.HighQualityAntialiasing)
         p.setRenderHint(QPainter.SmoothPixmapTransform)
 
-        # p.drawPixmap(self.offsetX, self.offsetY, self.image)
+        p.drawPixmap(self.offsetX, self.offsetY, self.image)
 
-        # if not self.hiding:
-        #     if self.mode == 'layout':
-        #         self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
-        #     else:
-        #         self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height)
-        #         self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-        #         pass
-        # elif self.mode != 'layout':
-        #     if not self.ctrlPressed:
-        #         self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height, hideOthers=True)
-        #         self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-        #         pass
-        #     pass
+        if not self.hiding:
+            if self.mode == 'layout':
+                self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
+            else:
+                self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height)
+                self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
+                pass
+        elif self.mode != 'layout':
+            if not self.ctrlPressed:
+                self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height, hideOthers=True)
+                self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
+                pass
+            pass
 
         p.end()
         return
@@ -341,8 +341,6 @@ class Canvas(QWidget):
         self.currentLabel = label
         return
 
-
-
     def loadCorners(self, corners):
         self.corners = list(corners)
         self.current = None
@@ -385,7 +383,7 @@ class Canvas(QWidget):
         #         continue
         #     pass
 
-        self.imagePaths = []
+        self.imagePaths = ['/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/maskeds_surf_im-06.jpg']
         # for imageIndex in xrange(self.numImages):
         #     self.imagePaths.append('%s/frames/frame-%06d.color.jpg'%(scenePath, imageIndex))
         #     continue
@@ -401,8 +399,12 @@ class Canvas(QWidget):
         return
 
     def showDensityImage(self):
-        # image = self.scene.getDensityImage(self.layout_width, self.layout_height)
-        # self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
+        #image = self.scene.getDensityImage(self.layout_width, self.layout_height)
+        image = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/maskeds_surf_im-06.jpg')
+        image = np.array(image).astype('uint8')
+        qimg = QImage()
+        qimg.loadFromData(image)
+        self.image = QPixmap.fromImage(qimg)
         return
 
     def moveToNextImage(self, delta=1):
@@ -432,7 +434,6 @@ class Canvas(QWidget):
         self.extrinsics = np.linalg.inv(self.extrinsics_inv)
         self.repaint()
         return
-
 
     def removeLastPoint(self):
         self.corners = self.corners[:-1]

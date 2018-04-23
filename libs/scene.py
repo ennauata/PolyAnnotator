@@ -1183,22 +1183,22 @@ class Scene():
         return
 
     def getDensityImage(self, width, height):
-        coordinates = self.points[:, :2]
-        self.minXY = coordinates.min(0)
-        self.maxRange = (coordinates.max(0) - self.minXY).max()
-        padding = self.maxRange * 0.05
-        self.minXY -= padding
-        self.maxRange += padding * 2
-        imageSizes = np.expand_dims(np.array([width, height]), 0)
-        coordinates = (coordinates - np.expand_dims(self.minXY, 0)) / self.maxRange * imageSizes
-        coordinates = np.minimum(np.maximum(coordinates, 0), imageSizes - 1).astype(np.int32)
-        density = np.zeros((height * width))
-        np.add.at(density, coordinates[:, 1] * width + coordinates[:, 0], 1)
-        density = np.minimum(density.reshape((height, width)) / 2 * 255, 255).astype(np.uint8)
-        density = np.tile(np.expand_dims(density, axis=-1), [1, 1, 3])
+        # coordinates = self.points[:, :2]
+        # self.minXY = coordinates.min(0)
+        # self.maxRange = (coordinates.max(0) - self.minXY).max()
+        # padding = self.maxRange * 0.05
+        # self.minXY -= padding
+        # self.maxRange += padding * 2
+        # imageSizes = np.expand_dims(np.array([width, height]), 0)
+        # coordinates = (coordinates - np.expand_dims(self.minXY, 0)) / self.maxRange * imageSizes
+        # coordinates = np.minimum(np.maximum(coordinates, 0), imageSizes - 1).astype(np.int32)
+        # density = np.zeros((height * width))
+        # np.add.at(density, coordinates[:, 1] * width + coordinates[:, 0], 1)
+        # density = np.minimum(density.reshape((height, width)) / 2 * 255, 255).astype(np.uint8)
+        # density = np.tile(np.expand_dims(density, axis=-1), [1, 1, 3])
 
-        self.getLayoutFaces(width, height)
-        return density
+        #self.getLayoutFaces(width, height)
+        return None
 
     def layoutPointTo2D(self, point, width, height):
         return np.array([point[0] / width * self.maxRange + self.minXY[0], point[1] / height * self.maxRange + self.minXY[1]])
@@ -1418,12 +1418,12 @@ end_header
 
     def getLayoutFaces(self, width, height):
         print('3D to layout')
-        self.layoutFaces = []
-        imageSizes = np.expand_dims(np.array([width, height]), 0)
-        for face in self.faces:
-            UVs = np.array([self.corners[cornerIndex][:2] for cornerIndex in face])
-            UVs = (UVs - np.expand_dims(self.minXY, 0)) / self.maxRange * imageSizes
-            #UVs = np.minimum(np.maximum(UVs, 0), imageSizes - 1).astype(np.int32)
-            self.layoutFaces.append((UVs.tolist(), -1))
-            continue
+        # self.layoutFaces = []
+        # imageSizes = np.expand_dims(np.array([width, height]), 0)
+        # for face in self.faces:
+        #     UVs = np.array([self.corners[cornerIndex][:2] for cornerIndex in face])
+        #     UVs = (UVs - np.expand_dims(self.minXY, 0)) / self.maxRange * imageSizes
+        #     #UVs = np.minimum(np.maximum(UVs, 0), imageSizes - 1).astype(np.int32)
+        #     self.layoutFaces.append((UVs.tolist(), -1))
+        #     continue
         return
