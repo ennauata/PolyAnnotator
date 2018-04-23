@@ -58,6 +58,9 @@ class Canvas(QWidget):
         self.layout_width = 1000
         self.layout_height = 1000
 
+        self.color_width = 640
+        self.color_height = 640
+
         self.offsetX = 10
         self.offsetY = 10
 
@@ -203,7 +206,6 @@ class Canvas(QWidget):
     def paintEvent(self, event):
         if (self.imageIndex == -1 or not self.image) and self.mode != 'layout':
             return super(Canvas, self).paintEvent(event)
-
         p = self._painter
         p.begin(self)
         p.setRenderHint(QPainter.Antialiasing)
@@ -400,11 +402,8 @@ class Canvas(QWidget):
 
     def showDensityImage(self):
         #image = self.scene.getDensityImage(self.layout_width, self.layout_height)
-        image = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/maskeds_surf_im-06.jpg')
-        image = np.array(image).astype('uint8')
-        qimg = QImage()
-        qimg.loadFromData(image)
-        self.image = QPixmap.fromImage(qimg)
+        self.image = QPixmap('/media/nelson/Workspace1/Projects/building_reconstruction/UK_extra_data/new_experiment/masked_surf_im-05.jpg')
+
         return
 
     def moveToNextImage(self, delta=1):
@@ -419,19 +418,19 @@ class Canvas(QWidget):
 
     def loadImage(self):
         image = cv2.imread(self.imagePaths[self.imageIndex])
-        self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.color_width, self.color_height, self.color_width * 3, QImage.Format_RGB888))
+        self.image = QPixmap(QImage(image[:, :, ::-1], self.color_width, self.color_height, self.color_width, QImage.Format_RGB888))
 
-        self.depth = cv2.imread(self.imagePaths[self.imageIndex].replace('color.jpg', 'depth.pgm'), -1).astype(np.float32) / 1000
+        # self.depth = cv2.imread(self.imagePaths[self.imageIndex].replace('color.jpg', 'depth.pgm'), -1).astype(np.float32) / 1000
 
 
-        self.extrinsics_inv = []
-        with open(self.imagePaths[self.imageIndex].replace('color.jpg', 'pose.txt'), 'r') as f:
-            for line in f:
-                self.extrinsics_inv += [float(value) for value in line.strip().split(' ') if value.strip() != '']
-                continue
-            pass
-        self.extrinsics_inv = np.array(self.extrinsics_inv).reshape((4, 4))
-        self.extrinsics = np.linalg.inv(self.extrinsics_inv)
+        # self.extrinsics_inv = []
+        # with open(self.imagePaths[self.imageIndex].replace('color.jpg', 'pose.txt'), 'r') as f:
+        #     for line in f:
+        #         self.extrinsics_inv += [float(value) for value in line.strip().split(' ') if value.strip() != '']
+        #         continue
+        #     pass
+        # self.extrinsics_inv = np.array(self.extrinsics_inv).reshape((4, 4))
+        # self.extrinsics = np.linalg.inv(self.extrinsics_inv)
         self.repaint()
         return
 
