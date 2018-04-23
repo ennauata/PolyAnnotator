@@ -15,8 +15,8 @@ COLOR_MAP = [QColor(255, 0, 0), QColor(0, 255, 0), QColor(0, 0, 255), QColor(255
 
 class Scene():
     def __init__(self, scenePath):
-        self.planes = np.load(scenePath + '/annotation/planes.npy')
-        self.numPlanes = self.planes.shape[0]
+        self.planes = None #np.load(scenePath + '/annotation/planes.npy')
+        self.numPlanes = 0 #self.planes.shape[0]
         self.loadPoints(scenePath)
 
         self.colorMap = ColorPalette(1000).getColorMap()
@@ -59,28 +59,28 @@ class Scene():
     def loadPoints(self, scenePath):
         points = []
         segmentation = []
-        planeNumPoints = np.zeros(self.numPlanes)
-        with open(scenePath + '/annotation/planes.ply') as f:
-            lineIndex = 0
-            for line in f:
-                if lineIndex >= 12:
-                    values = [token for token in line.strip().split(' ') if token.strip() != '']
-                    if len(values) != 6:
-                        break
-                    points.append(np.array([float(token) for token in values[:3]]))
-                    indices = [int(value) for value in values[3:]]
-                    if indices[0] == 255 and indices[1] == 255 and indices[2] == 255:
-                        planeIndex = -1
-                    else:
-                        assert((indices[0] * 256 * 256 + indices[1] * 256 + indices[2]) % 100 == 0)
-                        planeIndex = (indices[0] * 256 * 256 + indices[1] * 256 + indices[2]) / 100 - 1
-                        planeNumPoints[planeIndex] += 1
-                        pass
-                    segmentation.append(planeIndex)
-                    pass
-                lineIndex += 1
-                continue
-            pass
+        planeNumPoints = 0 #np.zeros(self.numPlanes)
+        # with open(scenePath + '/annotation/planes.ply') as f:
+        #     lineIndex = 0
+        #     for line in f:
+        #         if lineIndex >= 12:
+        #             values = [token for token in line.strip().split(' ') if token.strip() != '']
+        #             if len(values) != 6:
+        #                 break
+        #             points.append(np.array([float(token) for token in values[:3]]))
+        #             indices = [int(value) for value in values[3:]]
+        #             if indices[0] == 255 and indices[1] == 255 and indices[2] == 255:
+        #                 planeIndex = -1
+        #             else:
+        #                 assert((indices[0] * 256 * 256 + indices[1] * 256 + indices[2]) % 100 == 0)
+        #                 planeIndex = (indices[0] * 256 * 256 + indices[1] * 256 + indices[2]) / 100 - 1
+        #                 planeNumPoints[planeIndex] += 1
+        #                 pass
+        #             segmentation.append(planeIndex)
+        #             pass
+        #         lineIndex += 1
+        #         continue
+        #     pass
         self.points = np.array(points)
         self.segmentation = np.array(segmentation)
         self.planeNumPoints = planeNumPoints

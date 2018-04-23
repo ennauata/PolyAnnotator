@@ -23,7 +23,7 @@ import resources
 from libs.constants import *
 from libs.lib import struct, newAction, newIcon, addActions, fmtShortcut, generateColorByText
 from libs.settings import Settings
-from libs.polygon import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
+#from libs.polygon import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
 from libs.canvas import Canvas
 from libs.zoomWidget import ZoomWidget
 from libs.toolBar import ToolBar

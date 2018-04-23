@@ -9,7 +9,7 @@ except ImportError:
 #from PyQt4.QtOpenGL import *
 
 #from libs.corner import Corner
-from libs.corner import Corner
+#from libs.corner import Corner
 from libs.lib import distance
 import numpy as np
 import cv2
@@ -210,21 +210,21 @@ class Canvas(QWidget):
         p.setRenderHint(QPainter.HighQualityAntialiasing)
         p.setRenderHint(QPainter.SmoothPixmapTransform)
 
-        p.drawPixmap(self.offsetX, self.offsetY, self.image)
+        # p.drawPixmap(self.offsetX, self.offsetY, self.image)
 
-        if not self.hiding:
-            if self.mode == 'layout':
-                self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
-            else:
-                self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height)
-                self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-                pass
-        elif self.mode != 'layout':
-            if not self.ctrlPressed:
-                self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height, hideOthers=True)
-                self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-                pass
-            pass
+        # if not self.hiding:
+        #     if self.mode == 'layout':
+        #         self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
+        #     else:
+        #         self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height)
+        #         self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
+        #         pass
+        # elif self.mode != 'layout':
+        #     if not self.ctrlPressed:
+        #         self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height, hideOthers=True)
+        #         self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
+        #         pass
+        #     pass
 
         p.end()
         return
@@ -362,33 +362,33 @@ class Canvas(QWidget):
         #print(len(imagePaths))
         self.scene = Scene(scenePath)
 
-        with open(scenePath + '/frames/_info.txt') as f:
-            for line in f:
-                line = line.strip()
-                tokens = [token for token in line.split(' ') if token.strip() != '']
-                if tokens[0] == "m_calibrationColorIntrinsic":
-                    self.intrinsics = np.array([float(e) for e in tokens[2:]])
-                    self.intrinsics = self.intrinsics.reshape((4, 4))
-                elif tokens[0] == "m_colorWidth":
-                    self.color_width = int(tokens[2])
-                elif tokens[0] == "m_colorHeight":
-                    self.color_height = int(tokens[2])
-                elif tokens[0] == "m_depthWidth":
-                    self.depth_width = int(tokens[2])
-                elif tokens[0] == "m_depthHeight":
-                    self.depth_height = int(tokens[2])
-                elif tokens[0] == "m_depthShift":
-                    depth_shift = int(tokens[2])
-                elif tokens[0] == "m_frames.size":
-                    self.numImages = int(tokens[2])
-                    pass
-                continue
-            pass
+        # with open(scenePath + '/frames/_info.txt') as f:
+        #     for line in f:
+        #         line = line.strip()
+        #         tokens = [token for token in line.split(' ') if token.strip() != '']
+        #         if tokens[0] == "m_calibrationColorIntrinsic":
+        #             self.intrinsics = np.array([float(e) for e in tokens[2:]])
+        #             self.intrinsics = self.intrinsics.reshape((4, 4))
+        #         elif tokens[0] == "m_colorWidth":
+        #             self.color_width = int(tokens[2])
+        #         elif tokens[0] == "m_colorHeight":
+        #             self.color_height = int(tokens[2])
+        #         elif tokens[0] == "m_depthWidth":
+        #             self.depth_width = int(tokens[2])
+        #         elif tokens[0] == "m_depthHeight":
+        #             self.depth_height = int(tokens[2])
+        #         elif tokens[0] == "m_depthShift":
+        #             depth_shift = int(tokens[2])
+        #         elif tokens[0] == "m_frames.size":
+        #             self.numImages = int(tokens[2])
+        #             pass
+        #         continue
+        #     pass
 
         self.imagePaths = []
-        for imageIndex in xrange(self.numImages):
-            self.imagePaths.append('%s/frames/frame-%06d.color.jpg'%(scenePath, imageIndex))
-            continue
+        # for imageIndex in xrange(self.numImages):
+        #     self.imagePaths.append('%s/frames/frame-%06d.color.jpg'%(scenePath, imageIndex))
+        #     continue
 
         #if not os.path.exists(scenePath + '/annotation/room_layout.npy'):
         self.showDensityImage()
@@ -401,8 +401,8 @@ class Canvas(QWidget):
         return
 
     def showDensityImage(self):
-        image = self.scene.getDensityImage(self.layout_width, self.layout_height)
-        self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
+        # image = self.scene.getDensityImage(self.layout_width, self.layout_height)
+        # self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
         return
 
     def moveToNextImage(self, delta=1):
