@@ -16,6 +16,7 @@ import sys
 import glob
 from scene import Scene
 import os
+import glob
 
 sys.path.append('../code/')
 Image.MAX_IMAGE_PIXELS = 1000000000
@@ -66,6 +67,8 @@ class Canvas(QWidget):
         self.mode = 'layout'
         self.ctrlPressed = False
         self.shiftPressed = False
+        self.imagePaths = glob.glob('/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/*')
+
         return
 
     def readDepth(self, point):
@@ -193,7 +196,8 @@ class Canvas(QWidget):
         p.setRenderHint(QPainter.HighQualityAntialiasing)
         p.setRenderHint(QPainter.SmoothPixmapTransform)
 
-        p.drawPixmap(self.offsetX, self.offsetY, self.image)
+        if self.image is not None:
+            p.drawPixmap(self.offsetX, self.offsetY, self.image)
 
         if not self.hiding:
             if self.mode == 'layout':
@@ -289,14 +293,6 @@ class Canvas(QWidget):
             self.moveToNextImage(5)
         elif key == Qt.Key_Up:
             self.moveToPreviousImage(5)
-        elif key == Qt.Key_1:
-            self.moveToNextImage()
-            self.mode = 'move'
-            self.repaint()
-        elif key == Qt.Key_2:
-            self.showDensityImage()
-            self.mode = 'layout'
-            self.repaint()
         elif key == Qt.Key_E:
             if self.ctrlPressed:
                 self.scene.exportPly()
@@ -328,56 +324,6 @@ class Canvas(QWidget):
             continue
         return False
 
-
-    def loadScene(self, scenePath):
-        #imagePaths = glob.glob(scenePath + '/frames/frame-*.color.jpg')
-        #print(len(imagePaths))
-        self.scene = Scene(scenePath)
-
-        # with open(scenePath + '/frames/_info.txt') as f:
-        #     for line in f:
-        #         line = line.strip()
-        #         tokens = [token for token in line.split(' ') if token.strip() != '']
-        #         if tokens[0] == "m_calibrationColorIntrinsic":
-        #             self.intrinsics = np.array([float(e) for e in tokens[2:]])
-        #             self.intrinsics = self.intrinsics.reshape((4, 4))
-        #         elif tokens[0] == "m_colorWidth":
-        #             self.color_width = int(tokens[2])
-        #         elif tokens[0] == "m_colorHeight":
-        #             self.color_height = int(tokens[2])
-        #         elif tokens[0] == "m_depthWidth":
-        #             self.depth_width = int(tokens[2])
-        #         elif tokens[0] == "m_depthHeight":
-        #             self.depth_height = int(tokens[2])
-        #         elif tokens[0] == "m_depthShift":
-        #             depth_shift = int(tokens[2])
-        #         elif tokens[0] == "m_frames.size":
-        #             self.numImages = int(tokens[2])
-        #             pass
-        #         continue
-        #     pass
-
-        self.imagePaths = ['/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/masked_surf_im-05.jpg']
-        # for imageIndex in xrange(self.numImages):
-        #     self.imagePaths.append('%s/frames/frame-%06d.color.jpg'%(scenePath, imageIndex))
-        #     continue
-
-        #if not os.path.exists(scenePath + '/annotation/room_layout.npy'):
-        self.showDensityImage()
-        self.mode = 'layout'
-        # else:
-        #     self.moveToNextImage()
-        #     self.mode = 'move'
-        #     pass
-        self.repaint()
-        return
-
-    def showDensityImage(self):
-        image = cv2.imread(self.imagePaths[self.imageIndex])
-        image = cv2.resize(image, (self.layout_width, self.layout_height)) 
-        self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
-        return
-
     def moveToNextImage(self, delta=1):
         self.imageIndex = min(self.imageIndex + delta, len(self.imagePaths) - 1)
         self.loadImage()
@@ -389,20 +335,11 @@ class Canvas(QWidget):
         return
 
     def loadImage(self):
-        # image = cv2.imread(self.imagePaths[self.imageIndex])
-        # self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.color_width, self.color_height, self.color_width, QImage.Format_RGB888))
-
-        # self.depth = cv2.imread(self.imagePaths[self.imageIndex].replace('color.jpg', 'depth.pgm'), -1).astype(np.float32) / 1000
-
-
-        self.extrinsics_inv = []
-        # with open(self.imagePaths[self.imageIndex].replace('color.jpg', 'pose.txt'), 'r') as f:
-        #     for line in f:
-        #         self.extrinsics_inv += [float(value) for value in line.strip().split(' ') if value.strip() != '']
-        #         continue
-        #     pass
-        self.extrinsics_inv = np.array(self.extrinsics_inv).reshape((4, 4))
-        self.extrinsics = np.linalg.inv(self.extrinsics_inv)
+        imPath = self.imagePaths[self.imageIndex]
+        self.scene = Scene(imPath)
+        image = cv2.imread(imPath)
+        image = cv2.resize(image, (self.layout_width, self.layout_height)) 
+        self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
         self.repaint()
         return
 

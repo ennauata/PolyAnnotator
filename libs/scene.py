@@ -56,6 +56,7 @@ class Scene():
         self.layoutGraph = {}
         self.prevCorner = None
         self.isDisconnected = False
+        
         return
 
     def loadPoints(self, scenePath):

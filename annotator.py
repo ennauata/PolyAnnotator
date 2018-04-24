@@ -57,18 +57,18 @@ class MainWindow(QMainWindow):
         # self.editButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
 
-
         #self.canvas.coordinatesChanged.connect(self.centerChanged)
         #self.canvas.reloadAnnotation.connect(self.reloadAnnotation)
         #self.canvas.zoomRequest.connect(self.zoomRequest)
 
-        # scroll = QScrollArea()
-        # scroll.setWidget(self.canvas)
-        # scroll.setWidgetResizable(True)
-        # self.setCentralWidget(scroll)
-        
-        #self.canvas.resize(self.canvas.sizeHint())
+        # add scroll widget
+        scroll = QScrollArea()
+        scroll.setWidget(self.canvas)
+        scroll.setWidgetResizable(True)
+        self.setCentralWidget(scroll)
+        self.canvas.resize(self.canvas.sizeHint())
 
+        # create actions
         action = partial(newAction, self)
 
         nextU = action('&NextU', self.moveToNextUnannotated,
@@ -76,11 +76,28 @@ class MainWindow(QMainWindow):
         next = action('&Next', self.moveToNext,
                       'Ctrl+n', 'next', u'Move to next example')
 
+        # add and populate menubar
+        bar = self.menuBar()
+        file = bar.addMenu("File")
+        file.addAction("Open Image Folder")
+        file.addAction("New Annotation File")
+        file.addAction("Load Annotation File")
+        save = QAction("Save",self)
+        save.setShortcut("Ctrl+S")
+        file.addAction(save)
+
+        # add navigation sidebar 
+        self.items = QDockWidget("Images", self)
+        self.listWidget = QListWidget()
+        self.listWidget.addItem("item1")
+        self.listWidget.addItem("item2")
+        self.listWidget.addItem("item3")
+        self.items.setWidget(self.listWidget)
+        self.items.setFloating(False)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.items)
 
         # Store actions for further handling.
         self.actions = struct(nextU=nextU, next=next)
-
-
         self.scenePaths = os.listdir(self.dataFolder)
         self.sceneIndex = -1
         self.moveToNextUnannotated()
@@ -112,7 +129,7 @@ class MainWindow(QMainWindow):
         return
 
     def loadImage(self):
-        self.canvas.loadScene(self.scenePath)
+        self.canvas.loadImage()
         self.paintCanvas()
         self.setWindowTitle(__appname__ + ' ' + self.scenePath)
         self.canvas.setFocus(True)
