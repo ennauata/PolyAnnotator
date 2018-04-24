@@ -29,6 +29,7 @@ from libs.zoomWidget import ZoomWidget
 from libs.toolBar import ToolBar
 from libs.ustr import ustr
 from libs.version import __version__
+import glob
 
 __appname__ = 'annotator'
 
@@ -79,12 +80,21 @@ class MainWindow(QMainWindow):
         # add and populate menubar
         bar = self.menuBar()
         file = bar.addMenu("File")
-        file.addAction("Open Image Folder")
-        file.addAction("New Annotation File")
-        file.addAction("Load Annotation File")
+        loadDir = QAction("Open Image Folder",self)
         save = QAction("Save",self)
-        save.setShortcut("Ctrl+S")
+        quit = QAction("Quit",self)
+
+
+        # file.addAction("New Annotation File")
+        # file.addAction("Load Annotation File")
+        file.addAction(loadDir)
         file.addAction(save)
+        file.addAction(quit)
+
+        # set actions
+        loadDir.triggered.connect(self.loadImageFolder)
+        quit.triggered.connect(self.quitApp)
+        
 
         # add navigation sidebar 
         self.items = QDockWidget("Images", self)
@@ -108,6 +118,15 @@ class MainWindow(QMainWindow):
         self.move(position)
 
         self.queueEvent(self.loadImage)
+
+    def quitApp(self,q):
+        QApplication.quit()
+
+    def loadImageFolder(self,q):
+        dir_ = QFileDialog.getExistingDirectory(None, 'Select a folder:', '~/', QFileDialog.ShowDirsOnly)
+        self.canvas.imagePaths = glob.glob(str(dir_+'/*'))
+        self.canvas.loadImage()
+        return
 
     def moveToNextUnannotated(self):
         for sceneIndex, scenePath in enumerate(self.scenePaths[self.sceneIndex + 1:]):

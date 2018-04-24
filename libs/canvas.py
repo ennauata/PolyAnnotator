@@ -67,8 +67,8 @@ class Canvas(QWidget):
         self.mode = 'layout'
         self.ctrlPressed = False
         self.shiftPressed = False
-        self.imagePaths = glob.glob('/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/*')
-
+        self.imagePaths = [] #glob.glob('/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/*')
+        self.image = None
         return
 
     def readDepth(self, point):
@@ -188,32 +188,34 @@ class Canvas(QWidget):
         return
 
     def paintEvent(self, event):
-        if (self.imageIndex == -1 or not self.image) and self.mode != 'layout':
-            return super(Canvas, self).paintEvent(event)
-        p = self._painter
-        p.begin(self)
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setRenderHint(QPainter.HighQualityAntialiasing)
-        p.setRenderHint(QPainter.SmoothPixmapTransform)
 
         if self.image is not None:
-            p.drawPixmap(self.offsetX, self.offsetY, self.image)
+            if (self.imageIndex == -1 or not self.image) and self.mode != 'layout':
+                return super(Canvas, self).paintEvent(event)
+            p = self._painter
+            p.begin(self)
+            p.setRenderHint(QPainter.Antialiasing)
+            p.setRenderHint(QPainter.HighQualityAntialiasing)
+            p.setRenderHint(QPainter.SmoothPixmapTransform)
 
-        if not self.hiding:
-            if self.mode == 'layout':
-                self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
-            else:
-                self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height)
-                self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-                pass
-        elif self.mode != 'layout':
-            if not self.ctrlPressed:
-                self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height, hideOthers=True)
-                self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-                pass
-            pass
+            if self.image is not None:
+                p.drawPixmap(self.offsetX, self.offsetY, self.image)
 
-        p.end()
+            if not self.hiding:
+                if self.mode == 'layout':
+                    self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
+                else:
+                    self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height)
+                    self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
+                    pass
+            elif self.mode != 'layout':
+                if not self.ctrlPressed:
+                    self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height, hideOthers=True)
+                    self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
+                    pass
+                pass
+
+            p.end()
         return
 
     def transformPos(self, point, moving=False):
@@ -335,12 +337,13 @@ class Canvas(QWidget):
         return
 
     def loadImage(self):
-        imPath = self.imagePaths[self.imageIndex]
-        self.scene = Scene(imPath)
-        image = cv2.imread(imPath)
-        image = cv2.resize(image, (self.layout_width, self.layout_height)) 
-        self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
-        self.repaint()
+        if len(self.imagePaths) > 0:
+            imPath = self.imagePaths[self.imageIndex]
+            self.scene = Scene(imPath)
+            image = cv2.imread(imPath)
+            image = cv2.resize(image, (self.layout_width, self.layout_height)) 
+            self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
+            self.repaint()
         return
 
     def removeLastPoint(self):
