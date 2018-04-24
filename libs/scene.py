@@ -56,7 +56,7 @@ class Scene():
         self.layoutGraph = {}
         self.prevCorner = None
         self.isDisconnected = False
-        
+        self.edgesTracker = []
         return
 
     def loadPoints(self, scenePath):
@@ -441,24 +441,39 @@ class Scene():
         self.dominantNormals = scene_info['dominantNormals']
         return
 
-    def adjustFace(self):
-        if self.selectedFaceIndex != -1:
-            pass
-        return
-
-    def deleteSelected(self):
-        if self.selectedFaceIndex != -1:
-            face = self.faces[self.selectedFaceIndex]
-            self.faces.remove(face)
-            self.removeCorners()
-            self.selectedFaceIndex = -1
-            pass
-        return
-
     def removeLast(self):
-        self.selectedFaceIndex = len(self.faces) - 1
-        self.deleteSelected()
-        self.selectedFaceIndex = -1
+
+        # remove last edge
+        to_remove = None
+        if len(self.edgesTracker) > 0:
+            c1 = self.edgesTracker[-1][0]
+            c2 = self.edgesTracker[-1][1]
+
+            # update annotation
+            idx = self.layoutGraph[c1].index(c2)
+            del self.layoutGraph[c1][idx]
+            if len(self.layoutGraph[c1]) == 0:
+                del self.layoutGraph[c1]
+
+            idx = self.layoutGraph[c2].index(c1)
+            del self.layoutGraph[c2][idx]
+            if len(self.layoutGraph[c2]) == 0:
+                del self.layoutGraph[c2]           
+
+            # update tracker
+            self.edgesTracker = self.edgesTracker[:-1]
+
+            # update prev corner
+            if len(self.edgesTracker) > 0:
+                self.prevCorner = self.edgesTracker[-1][1]
+            else:
+                self.prevCorner = None
+
+        # if there is only one corner
+        elif self.prevCorner is not None:
+            del self.layoutGraph[self.prevCorner]
+            self.prevCorner = None
+        print(self.edgesTracker)
         return
 
     def removeCorners(self):
@@ -491,6 +506,7 @@ class Scene():
     def addLayoutCornerMod(self, point, width, height, selectPlane=False, epsilon=10):
 
         # check if is a new corner
+        isNewEdge = False
         isNewCorner = True
         currCorner = tuple(point)
         for existingCorner in self.layoutGraph.keys():
@@ -504,19 +520,26 @@ class Scene():
             # closing one edge with a new node
             if isNewCorner:
                 self.layoutGraph[currCorner] = [self.prevCorner]
+                isNewEdge = True
             # closing one edge with an existing node
             else:
                 # add only if connection does not exist
                 if self.prevCorner not in self.layoutGraph[currCorner]:
                     self.layoutGraph[currCorner].append(self.prevCorner)
+                    isNewEdge = True
+
             # add only if connection does not exist
             if currCorner not in self.layoutGraph[self.prevCorner]:
                 self.layoutGraph[self.prevCorner].append(currCorner)
+                isNewEdge = True
         else:
             # graph is disconnected and clicked on non existing node
             if isNewCorner:
                 self.layoutGraph[currCorner] = []
 
+        # if edge is added keep track
+        if isNewEdge: 
+            self.edgesTracker.append((self.prevCorner, currCorner))
         self.prevCorner = currCorner
         return
 

@@ -124,8 +124,10 @@ class MainWindow(QMainWindow):
 
     def loadImageFolder(self,q):
         dir_ = QFileDialog.getExistingDirectory(None, 'Select a folder:', '~/', QFileDialog.ShowDirsOnly)
-        self.canvas.imagePaths = glob.glob(str(dir_+'/*'))
-        self.canvas.loadImage()
+        if dir_ != '':
+            self.canvas.imagePaths = glob.glob(str(dir_+'/*'))
+            self.canvas.imageIndex = 0
+            self.canvas.loadImage()
         return
 
     def moveToNextUnannotated(self):
