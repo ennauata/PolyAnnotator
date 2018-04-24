@@ -6,16 +6,11 @@ except ImportError:
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
 
-#from PyQt4.QtOpenGL import *
-
-#from libs.corner import Corner
-#from libs.corner import Corner
 from libs.lib import distance
 import numpy as np
 import cv2
 from PIL import Image
 import requests
-#import StringIO
 import urllib
 import sys
 import glob
@@ -55,8 +50,8 @@ class Canvas(QWidget):
         self.width = 1280
         self.height = 960
 
-        self.layout_width = 1000
-        self.layout_height = 1000
+        self.layout_width = 800
+        self.layout_height = 800
 
         self.color_width = 640
         self.color_height = 640
@@ -73,49 +68,40 @@ class Canvas(QWidget):
         self.shiftPressed = False
         return
 
-    # def creating(self):
-    #     return self.mode == self.CREATE
-
-    # def editing(self):
-    #     return self.mode == self.EDIT
-
-    # def setMode(self, value=True):
-    #     self.mode = self.CREATE if value else self.EDIT
-    #     if value:  # Create
-    #         self.unHighlight()
-    #         self.deSelectCorner()
-    #     self.prevPoint = QPointF()
-    #     self.repaint()
-
-
     def readDepth(self, point):
         u = point[0] / self.color_width * self.depth_width
         v = point[1] / self.color_height * self.depth_height
         return self.depth[int(round(v)), int(round(u))]
 
     def mousePressEvent(self, ev):
+
         #print(self.drawing(), pos)
         if ev.button() == Qt.LeftButton:
             point = self.transformPos(ev.pos())
             if self.mode == 'layout':
+                print('A')
                 self.scene.addLayoutCorner(point, self.layout_width, self.layout_height, selectPlane=self.ctrlPressed)
+                self.scene.addLayoutCornerMod(point, self.layout_width, self.layout_height, selectPlane=self.ctrlPressed)
             elif self.mode == 'point':
                 depth = self.readDepth(point)
-                if self.scene.addCorner(point, depth, self.extrinsics_inv, self.intrinsics):
-                    self.mode = 'move'
-                    pass
+                print('B')
+                #if self.scene.addCorner(point, depth, self.extrinsics_inv, self.intrinsics):
+                    # self.mode = 'move'
+                    # pass
             elif self.mode == 'move':
+                print('C')
                 self.scene.select(point)
             elif self.mode == 'add':
+                print('D')
                 depth = self.readDepth(point)
-                self.scene.addPlane(point, depth, self.extrinsics_inv, self.intrinsics)
+                #self.scene.addPlane(point, depth, self.extrinsics_inv, self.intrinsics)
                 self.mode = 'move'
                 pass
             self.prevPoint = point
             pass
-        #if ev.button() == Qt.RightButton:
-        #pos = self.transformPos(ev.pos(), moving=True)
-        #pass
+        if ev.button() == Qt.RightButton:
+            pos = self.transformPos(ev.pos(), moving=True)
+            pass
         self.repaint()
         return
 
@@ -141,12 +127,7 @@ class Canvas(QWidget):
                 else:
                     distanceScale = 1.1
                     pass
-                # if self.ctrlPressed:
-                #     #distanceScale = min(max(1 - (point[1] - self.prevPoint[1]) / 100, 0.8), 1.2)
-                #     distanceScale = min(max(1 - (point[1] - self.prevPoint[1]) / 100, 0.8), 1.2)
-                # else:
-                #     distanceScale = 1.0
-                #     pass
+
                 self.scene.moveEdge(self.extrinsics_inv, self.intrinsics, self.imageIndex, distanceScale=distanceScale)
                 self.repaint()
                 pass
@@ -260,6 +241,9 @@ class Canvas(QWidget):
             self.shiftPressed = False
             pass
 
+        if key == Qt.Key_D:
+            self.scene.disconnectGraph()
+
         if key == Qt.Key_Escape:
             #self.mode = 'moving'
             self.scene.deleteSelected()
@@ -281,6 +265,7 @@ class Canvas(QWidget):
         elif key == Qt.Key_A:
             if self.mode != 'layout':
                 self.mode = 'add'
+                print(self.mode)
                 pass
         elif key == Qt.Key_Q:
             if self.mode != 'layout':
@@ -291,9 +276,6 @@ class Canvas(QWidget):
                 print('save')
                 self.scene.save()
                 pass
-        elif key == Qt.Key_D:
-            self.setCurrentLabel(2)
-            self.setMode(False)
         elif key == Qt.Key_F:
             self.setCurrentLabel(3)
             self.setMode(False)
@@ -319,16 +301,6 @@ class Canvas(QWidget):
             if self.ctrlPressed:
                 self.scene.exportPly()
                 pass
-        elif key == Qt.Key_Space:
-            if self.mode == 'layout':
-                self.scene.layoutTo3D(self.layout_width, self.layout_height)
-                self.moveToNextImage()
-                self.mode = 'move'
-            else:
-                self.scene.finalize()
-                pass
-            self.repaint()
-            pass
         return
 
     def keyReleaseEvent(self, ev):
@@ -385,7 +357,7 @@ class Canvas(QWidget):
         #         continue
         #     pass
 
-        self.imagePaths = ['/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/maskeds_surf_im-06.jpg']
+        self.imagePaths = ['/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/masked_surf_im-05.jpg']
         # for imageIndex in xrange(self.numImages):
         #     self.imagePaths.append('%s/frames/frame-%06d.color.jpg'%(scenePath, imageIndex))
         #     continue
@@ -401,9 +373,9 @@ class Canvas(QWidget):
         return
 
     def showDensityImage(self):
-        #image = self.scene.getDensityImage(self.layout_width, self.layout_height)
-        self.image = QPixmap('/media/nelson/Workspace1/Projects/building_reconstruction/UK_extra_data/new_experiment/masked_surf_im-05.jpg')
-
+        image = cv2.imread(self.imagePaths[self.imageIndex])
+        image = cv2.resize(image, (self.layout_width, self.layout_height)) 
+        self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
         return
 
     def moveToNextImage(self, delta=1):
@@ -417,20 +389,20 @@ class Canvas(QWidget):
         return
 
     def loadImage(self):
-        image = cv2.imread(self.imagePaths[self.imageIndex])
-        self.image = QPixmap(QImage(image[:, :, ::-1], self.color_width, self.color_height, self.color_width, QImage.Format_RGB888))
+        # image = cv2.imread(self.imagePaths[self.imageIndex])
+        # self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.color_width, self.color_height, self.color_width, QImage.Format_RGB888))
 
         # self.depth = cv2.imread(self.imagePaths[self.imageIndex].replace('color.jpg', 'depth.pgm'), -1).astype(np.float32) / 1000
 
 
-        # self.extrinsics_inv = []
+        self.extrinsics_inv = []
         # with open(self.imagePaths[self.imageIndex].replace('color.jpg', 'pose.txt'), 'r') as f:
         #     for line in f:
         #         self.extrinsics_inv += [float(value) for value in line.strip().split(' ') if value.strip() != '']
         #         continue
         #     pass
-        # self.extrinsics_inv = np.array(self.extrinsics_inv).reshape((4, 4))
-        # self.extrinsics = np.linalg.inv(self.extrinsics_inv)
+        self.extrinsics_inv = np.array(self.extrinsics_inv).reshape((4, 4))
+        self.extrinsics = np.linalg.inv(self.extrinsics_inv)
         self.repaint()
         return
 
