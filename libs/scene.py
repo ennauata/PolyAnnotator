@@ -103,8 +103,10 @@ class Scene():
         # draw all points in the graph
         for pt in self.layoutGraph.keys():
 
+        
             point = QPoint(int(round(pt[0] + offsetX)), int(round(pt[1] + offsetY)))
-            corner_path.addEllipse(point, d / 2.0, d / 2.0)
+            if pt is not self.prevCorner:
+                corner_path.addEllipse(point, d / 2.0, d / 2.0)
 
             # draw all neighbours
             for n_pt in self.layoutGraph[pt]:
@@ -114,6 +116,19 @@ class Scene():
 
         painter.drawPath(corner_path)
         painter.drawPath(boundary_path)
+
+        # paint previous corner with another color
+        if self.prevCorner is not None:
+            color = QColor(self.colorMap[1][0], self.colorMap[1][1], self.colorMap[1][2])
+            pen = QPen(color)
+            pen.setWidth(3)
+            painter.setPen(pen)
+            d = 10
+            corner_path = QPainterPath()
+
+            point = QPoint(int(round(self.prevCorner[0] + offsetX)), int(round(self.prevCorner[1] + offsetY)))
+            corner_path.addEllipse(point, d / 2.0, d / 2.0)
+            painter.drawPath(corner_path)
         return
 
     def paint(self, painter, extrinsics, intrinsics, width, height, offsetX, offsetY):
@@ -473,7 +488,6 @@ class Scene():
         elif self.prevCorner is not None:
             del self.layoutGraph[self.prevCorner]
             self.prevCorner = None
-        print(self.edgesTracker)
         return
 
     def removeCorners(self):
@@ -549,7 +563,6 @@ class Scene():
             self.layoutFaces.append([self.layoutFace, -1])
             print(self.layoutFace)
             self.layoutFace = []
-            print('test_1')
         else:
             self.selectedLayoutCorner = [-1, -1]
             if len(self.layoutFace) == 0:
@@ -561,7 +574,6 @@ class Scene():
                         continue
                     continue
                 pass
-            print('test_2')
             if self.selectedLayoutCorner[0] == -1:
                 self.layoutFace.append(point)
                 pass
