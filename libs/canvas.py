@@ -188,11 +188,6 @@ class Canvas(QWidget):
             if self.mode == 'move':
                 self.scene.removeCorner()
                 self.repaint()
-
-        if key == Qt.Key_Escape:
-            #self.mode = 'moving'
-            self.scene.deleteSelected()
-            self.repaint()
         if key == Qt.Key_Z:
             if self.ctrlPressed:
                 self.scene.removeLast()
@@ -217,21 +212,10 @@ class Canvas(QWidget):
                 self.mode = 'layout'
                 print('Layout Mode')
             print(self.mode)
-            pass
-        elif key == Qt.Key_Q:
-            if self.mode != 'layout':
-                self.mode = 'point'
-                pass
         elif key == Qt.Key_S:
             if self.ctrlPressed:
                 print('save')
                 self.scene.save()
-                pass
-        elif key == Qt.Key_F:
-            self.setCurrentLabel(3)
-            self.setMode(False)
-        elif key == Qt.Key_M:
-            self.writePLYFile()
         elif key == Qt.Key_Right:
             self.moveToNextImage()
         elif key == Qt.Key_Left:
@@ -240,10 +224,6 @@ class Canvas(QWidget):
             self.moveToNextImage(5)
         elif key == Qt.Key_Up:
             self.moveToPreviousImage(5)
-        elif key == Qt.Key_E:
-            if self.ctrlPressed:
-                self.scene.exportPly()
-                pass
         return
 
     def keyReleaseEvent(self, ev):
