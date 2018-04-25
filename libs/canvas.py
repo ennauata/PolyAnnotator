@@ -132,7 +132,6 @@ class Canvas(QWidget):
         return
 
     def paintEvent(self, event):
-        print('in paint event')
         if self.image is not None:
             if (self.imageIndex == -1 or not self.image) and self.mode != 'layout':
                 return super(Canvas, self).paintEvent(event)
