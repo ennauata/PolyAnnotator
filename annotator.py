@@ -19,6 +19,7 @@ except ImportError:
     from PyQt4.QtCore import *
 
 import resources
+import os
 # Add internal libs
 from libs.constants import *
 from libs.lib import struct, newAction, newIcon, addActions, fmtShortcut, generateColorByText
@@ -44,7 +45,7 @@ class MainWindow(QMainWindow):
         self.settings.load()
         settings = self.settings
 
-        self.dataFolder = '../data/'
+        self.dataFolder = './data/'
         self.zoomWidget = ZoomWidget()
 
         self.canvas = Canvas()
@@ -82,7 +83,7 @@ class MainWindow(QMainWindow):
         file = bar.addMenu("File")
         loadDir = QAction("Open Image Folder",self)
         save = QAction("Save",self)
-        quit = QAction("Quit",self)
+        quit = QAction("Close Annotator",self)
 
 
         # file.addAction("New Annotation File")
@@ -93,15 +94,16 @@ class MainWindow(QMainWindow):
 
         # set actions
         loadDir.triggered.connect(self.loadImageFolder)
+
+        # save.triggered.connect(self.saveAnnotation)
         quit.triggered.connect(self.quitApp)
         
+        self.loadedFiles = []
 
         # add navigation sidebar 
         self.items = QDockWidget("Images", self)
         self.listWidget = QListWidget()
-        self.listWidget.addItem("item1")
-        self.listWidget.addItem("item2")
-        self.listWidget.addItem("item3")
+        self.listWidget.itemActivated.connect(self.loadActivatedImage)
         self.items.setWidget(self.listWidget)
         self.items.setFloating(False)
         self.addDockWidget(Qt.RightDockWidgetArea, self.items)
@@ -124,11 +126,20 @@ class MainWindow(QMainWindow):
 
     def loadImageFolder(self,q):
         dir_ = QFileDialog.getExistingDirectory(None, 'Select a folder:', '~/', QFileDialog.ShowDirsOnly)
+        self.loadedFiles = sorted(os.listdir(dir_))
+        self.updateDock()        
         if dir_ != '':
-            self.canvas.imagePaths = glob.glob(str(dir_+'/*'))
+            pathofLoadedFiles = [os.path.join(str(dir_), filename) for filename in self.loadedFiles]
+
+            self.canvas.imagePaths = pathofLoadedFiles
             self.canvas.imageIndex = 0
             self.canvas.loadImage()
         return
+
+    def updateDock(self):
+        self.listWidget.clear()
+        for filename in self.loadedFiles:
+            self.listWidget.addItem(filename)
 
     def moveToNextUnannotated(self):
         for sceneIndex, scenePath in enumerate(self.scenePaths[self.sceneIndex + 1:]):
@@ -155,6 +166,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(__appname__ + ' ' + self.scenePath)
         self.canvas.setFocus(True)
         return
+
+    def loadActivatedImage(self, item):
+        item_idx = self.loadedFiles.index(item.text())
+        self.canvas.imageIndex = item_idx
+        self.canvas.loadImage()
 
 
     def queueEvent(self, function):
