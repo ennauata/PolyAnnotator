@@ -118,7 +118,8 @@ class Scene():
                       'isDisconnected': self.isDisconnected, 
                       'edgesTracker': self.edgesTracker, 
                       'selectedCorner': self.selectedCorner,
-                      'isAfterDelete': self.isAfterDelete}
+                      'isAfterDelete': self.isAfterDelete,
+                      'prevCorner': self.prevCorner}
 
         np.save(self.scenePath, scene_info)
 
@@ -130,7 +131,8 @@ class Scene():
             self.edgesTracker = scene_info['edgesTracker']
             self.selectedCorner = scene_info['selectedCorner']
             self.isAfterDelete = scene_info['isAfterDelete']
-
+            self.prevCorner = scene_info['prevCorner']
+            
     def removeCorner(self):
         aux_nbs = list(self.layoutGraph[self.selectedCorner])
         del self.layoutGraph[self.selectedCorner]
