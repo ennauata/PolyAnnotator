@@ -74,61 +74,42 @@ class Canvas(QWidget):
 
     def mousePressEvent(self, ev):
 
-        if ev.button() == Qt.LeftButton:
+        if ev.button() == Qt.LeftButton and self.image is not None:
             point = self.transformPos(ev.pos())
             if self.mode == 'layout':
                 self.scene.addLayoutCorner(point, self.layout_width, self.layout_height, selectPlane=self.ctrlPressed)
             elif self.mode == 'move':
                 self.scene.selectCorner(point)
             self.prevPoint = point
-        self.repaint()
+            self.repaint()
         return
 
     def mouseMoveEvent(self, ev):
         """Update line with last point and current coordinates."""
-
 
         if (Qt.LeftButton & ev.buttons()):
             if self.mode == 'move':
                 point = self.transformPos(ev.pos())
                 self.scene.moveCorner(point)
                 self.repaint()
-            return
-
-        return
-
-    def mouseReleaseEvent(self, ev):
-        if self.ctrlPressed and self.shiftPressed and self.scene.selectedCornerIndex != -1:
-            point = self.transformPos(ev.pos())
-            self.scene.moveCorner(point, self.extrinsics_inv, self.intrinsics, self.imageIndex, recording=True)
-            pass
-        elif self.shiftPressed and self.scene.selectedCornerIndex != -1:
-            point = self.transformPos(ev.pos())
-            self.scene.moveCorner(point, self.extrinsics_inv, self.intrinsics, self.imageIndex, concave=True)
-            self.repaint()
-            pass
-        self.scene.selectedLayoutCorner = [-1, -1]
-        self.scene.selectedCornerIndex = -1
-        self.scene.selectedEdgeIndex = -1
-
         return
 
     def wheelEvent(self, ev):
-        qt_version = 4 if hasattr(ev, "delta") else 5
-        if qt_version == 4:
-            if ev.orientation() == Qt.Vertical:
-                v_delta = ev.delta()
-                h_delta = 0
-            else:
-                h_delta = ev.delta()
-                v_delta = 0
-        else:
-            delta = ev.angleDelta()
-            h_delta = delta.x()
-            v_delta = delta.y()
-            pass
-        self.scene.adjustHeight(v_delta, self.ctrlPressed)
-        self.repaint()
+        # qt_version = 4 if hasattr(ev, "delta") else 5
+        # if qt_version == 4:
+        #     if ev.orientation() == Qt.Vertical:
+        #         v_delta = ev.delta()
+        #         h_delta = 0
+        #     else:
+        #         h_delta = ev.delta()
+        #         v_delta = 0
+        # else:
+        #     delta = ev.angleDelta()
+        #     h_delta = delta.x()
+        #     v_delta = delta.y()
+        #     pass
+        # self.scene.adjustHeight(v_delta, self.ctrlPressed)
+        # self.repaint()
         return
 
     def handleDrawing(self, pos):

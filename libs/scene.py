@@ -27,17 +27,6 @@ class Scene():
 
     def reset(self, mode='load'):
 
-        if mode == 'init' or not os.path.exists(self.scenePath + '/annotation/scene_info.npy'):
-            # self.dividePlanes()
-            # self.findCorners()
-            self.corners = np.array([])
-            self.faces = []
-            self.cornersOpp = np.array([])
-            self.dominantNormals = []
-
-        else:
-            self.load()
-            pass
         self.layoutGraph = {}
         self.prevCorner = None
         self.isDisconnected = False
@@ -135,6 +124,16 @@ class Scene():
                 idx = self.layoutGraph[node].index(self.selectedCorner)
                 self.layoutGraph[node][idx] = tuple(point)
             self.layoutGraph[tuple(point)] = aux_nbs
+
+            # update edge tracker
+            for k in range(len(self.edgesTracker)):
+                n1, n2 = self.edgesTracker[k]
+
+                if n1 == self.selectedCorner:
+                    n1 = tuple(point)
+                if n2 == self.selectedCorner:
+                    n2 = tuple(point)
+                self.edgesTracker[k] = (n1, n2)
 
             # update prev node if needed
             if self.prevCorner == self.selectedCorner:
