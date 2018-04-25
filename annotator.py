@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
         self.settings.load()
         settings = self.settings
 
-        self.dataFolder = './data/'
+        self.dataFolder = '/'
         self.zoomWidget = ZoomWidget()
 
         self.canvas = Canvas()
