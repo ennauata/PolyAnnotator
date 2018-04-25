@@ -1,4 +1,7 @@
 import numpy as np
+import copy
+import os
+from utils import *
 
 try:
     from PyQt5.QtGui import *
@@ -6,9 +9,7 @@ try:
 except ImportError:
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
-import copy
-import os
-from utils import *
+
 
 COLOR_MAP = [QColor(255, 0, 0), QColor(0, 255, 0), QColor(0, 0, 255), QColor(255, 0, 255)]
 
@@ -22,7 +23,7 @@ class Scene():
         self.scenePath = scenePath
 
         self.reset()
-        return
+        self.load()
 
     def reset(self, mode='load'):
 
@@ -122,12 +123,13 @@ class Scene():
         np.save(self.scenePath, scene_info)
 
     def load(self):
-        scene_info = np.load(self.scenePath)[()]
-        self.layoutGraph = scene_info['layoutGraph']
-        self.isDisconnected = scene_info['isDisconnected']
-        self.edgesTracker = scene_info['edgesTracker']
-        self.selectedCorner = scene_info['selectedCorner']
-        self.isAfterDelete = scene_info['isAfterDelete']
+        if os.path.exists(self.scenePath):
+            scene_info = np.load(self.scenePath)[()]
+            self.layoutGraph = scene_info['layoutGraph']
+            self.isDisconnected = scene_info['isDisconnected']
+            self.edgesTracker = scene_info['edgesTracker']
+            self.selectedCorner = scene_info['selectedCorner']
+            self.isAfterDelete = scene_info['isAfterDelete']
 
     def removeCorner(self):
         aux_nbs = list(self.layoutGraph[self.selectedCorner])
