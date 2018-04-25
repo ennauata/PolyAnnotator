@@ -65,46 +65,22 @@ class Canvas(QWidget):
         self.resize(self.width, self.height)
         self.imageIndex = -1
         self.mode = 'layout'
+        print('Layout Mode')
         self.ctrlPressed = False
         self.shiftPressed = False
-        self.imagePaths = [] #glob.glob('/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/test/imgs/*')
+        self.imagePaths = []
         self.image = None
         return
 
-    def readDepth(self, point):
-        u = point[0] / self.color_width * self.depth_width
-        v = point[1] / self.color_height * self.depth_height
-        return self.depth[int(round(v)), int(round(u))]
-
     def mousePressEvent(self, ev):
 
-        #print(self.drawing(), pos)
         if ev.button() == Qt.LeftButton:
             point = self.transformPos(ev.pos())
             if self.mode == 'layout':
-                print('A')
                 self.scene.addLayoutCorner(point, self.layout_width, self.layout_height, selectPlane=self.ctrlPressed)
-                self.scene.addLayoutCornerMod(point, self.layout_width, self.layout_height, selectPlane=self.ctrlPressed)
-            elif self.mode == 'point':
-                depth = self.readDepth(point)
-                print('B')
-                #if self.scene.addCorner(point, depth, self.extrinsics_inv, self.intrinsics):
-                    # self.mode = 'move'
-                    # pass
             elif self.mode == 'move':
-                print('C')
-                self.scene.select(point)
-            elif self.mode == 'add':
-                print('D')
-                depth = self.readDepth(point)
-                #self.scene.addPlane(point, depth, self.extrinsics_inv, self.intrinsics)
-                self.mode = 'move'
-                pass
+                self.scene.selectCorner(point)
             self.prevPoint = point
-            pass
-        if ev.button() == Qt.RightButton:
-            pos = self.transformPos(ev.pos(), moving=True)
-            pass
         self.repaint()
         return
 
@@ -113,28 +89,10 @@ class Canvas(QWidget):
 
 
         if (Qt.LeftButton & ev.buttons()):
-            point = self.transformPos(ev.pos())
-            if self.mode == 'layout':
-                self.scene.moveLayoutCorner(point)
+            if self.mode == 'move':
+                point = self.transformPos(ev.pos())
+                self.scene.moveCorner(point)
                 self.repaint()
-            elif self.scene.selectedCornerIndex != -1:
-                if not self.shiftPressed or self.ctrlPressed:
-                    self.scene.moveCorner(point, self.extrinsics_inv, self.intrinsics, self.imageIndex, axisAligned=(not self.ctrlPressed and not self.shiftPressed))
-                    self.repaint()
-                    pass
-            elif self.scene.selectedEdgeIndex != -1 and False:
-                if abs(point[1] - self.prevPoint[1]) < 10:
-                    distanceScale = 1.0
-                elif point[1] - self.prevPoint[1] <= -10:
-                    distanceScale = 1.0 / 1.1
-                else:
-                    distanceScale = 1.1
-                    pass
-
-                self.scene.moveEdge(self.extrinsics_inv, self.intrinsics, self.imageIndex, distanceScale=distanceScale)
-                self.repaint()
-                pass
-            self.prevPoint = point
             return
 
         return
@@ -205,15 +163,7 @@ class Canvas(QWidget):
                 if self.mode == 'layout':
                     self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
                 else:
-                    self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height)
-                    self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-                    pass
-            elif self.mode != 'layout':
-                if not self.ctrlPressed:
-                    self.scene.updateVisiblePolygons(self.extrinsics, self.intrinsics, self.color_width, self.color_height, hideOthers=True)
-                    self.scene.paint(p, self.extrinsics, self.intrinsics, self.color_width, self.color_height, self.offsetX, self.offsetY)
-                    pass
-                pass
+                    self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
 
             p.end()
         return
@@ -249,6 +199,10 @@ class Canvas(QWidget):
 
         if key == Qt.Key_D:
             self.scene.disconnectGraph()
+        if key == Qt.Key_Delete:
+            if self.mode == 'move':
+                self.scene.removeCorner()
+                self.repaint()
 
         if key == Qt.Key_Escape:
             #self.mode = 'moving'
@@ -269,10 +223,16 @@ class Canvas(QWidget):
             self.hiding = not self.hiding
             self.repaint()
         elif key == Qt.Key_A:
-            if self.mode != 'layout':
-                self.mode = 'add'
-                print(self.mode)
-                pass
+            print(self.mode)
+            #if self.mode != 'layout':
+            if self.mode == 'layout':
+                self.mode = 'move'
+                print('Move Mode')
+            else:
+                self.mode = 'layout'
+                print('Layout Mode')
+            print(self.mode)
+            pass
         elif key == Qt.Key_Q:
             if self.mode != 'layout':
                 self.mode = 'point'
