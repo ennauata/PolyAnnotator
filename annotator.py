@@ -51,18 +51,6 @@ class MainWindow(QMainWindow):
         self.canvas = Canvas()
         self.setCentralWidget(self.canvas)
 
-        # Create a widget for edit and diffc button
-        # self.diffcButton = QCheckBox(u'difficult')
-        # self.diffcButton.setChecked(False)
-        # self.diffcButton.stateChanged.connect(self.btnstate)
-        # self.editButton = QToolButton()
-        # self.editButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-
-
-        #self.canvas.coordinatesChanged.connect(self.centerChanged)
-        #self.canvas.reloadAnnotation.connect(self.reloadAnnotation)
-        #self.canvas.zoomRequest.connect(self.zoomRequest)
-
         # add scroll widget
         scroll = QScrollArea()
         scroll.setWidget(self.canvas)
