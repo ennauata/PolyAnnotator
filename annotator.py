@@ -82,20 +82,21 @@ class MainWindow(QMainWindow):
         bar = self.menuBar()
         file = bar.addMenu("File")
         loadDir = QAction("Open Image Folder",self)
-        save = QAction("Save",self)
+        save = QAction("Save Annotation",self)
+        load = QAction("Load Annotation", self)
         quit = QAction("Close Annotator",self)
 
 
-        # file.addAction("New Annotation File")
-        # file.addAction("Load Annotation File")
+        file.addAction(save)
+        file.addAction(load)
         file.addAction(loadDir)
         file.addAction(save)
         file.addAction(quit)
 
         # set actions
         loadDir.triggered.connect(self.loadImageFolder)
-
-        # save.triggered.connect(self.saveAnnotation)
+        save.triggered.connect(self.canvas.save)
+        load.triggered.connect(self.canvas.load)
         quit.triggered.connect(self.quitApp)
         
         self.loadedFiles = []

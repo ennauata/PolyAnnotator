@@ -44,6 +44,11 @@ class Canvas(QWidget):
 
         self.prevPoint = QPointF()
         self._painter = QPainter()
+        self.sceneDir = './scenes'
+
+        if not os.path.exists(self.sceneDir):
+            os.mkdir(self.sceneDir)
+
         # Set widget options.
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.WheelFocus)
@@ -127,7 +132,7 @@ class Canvas(QWidget):
         return
 
     def paintEvent(self, event):
-
+        print('in paint event')
         if self.image is not None:
             if (self.imageIndex == -1 or not self.image) and self.mode != 'layout':
                 return super(Canvas, self).paintEvent(event)
@@ -280,12 +285,27 @@ class Canvas(QWidget):
     def loadImage(self):
         if len(self.imagePaths) > 0:
             imPath = self.imagePaths[self.imageIndex]
-            self.scene = Scene(imPath)
+            scenePath = self._getScenePath(imPath)
+            self.scene = Scene(scenePath)
             image = cv2.imread(imPath)
             image = cv2.resize(image, (self.layout_width, self.layout_height)) 
             self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
             self.repaint()
         return
+
+    def _getScenePath(self, imPath):
+        filename = os.path.basename(imPath)
+        filename_no_ext, _ = os.path.splitext(filename)
+        scene_name = filename_no_ext + '_scene.npy'
+        scene_path = os.path.join(self.sceneDir, scene_name)
+        return scene_path
+
+    def save(self):
+        self.scene.save()
+
+    def load(self):
+        self.scene.load()
+        self.repaint()
 
     def removeLastPoint(self):
         self.corners = self.corners[:-1]

@@ -17,7 +17,6 @@ class Scene():
     def __init__(self, scenePath):
         self.planes = None #np.load(scenePath + '/annotation/planes.npy')
         self.numPlanes = 0 #self.planes.shape[0]
-        self.loadPoints(scenePath)
 
         self.colorMap = ColorPalette(1000).getColorMap()
         self.scenePath = scenePath
@@ -33,36 +32,6 @@ class Scene():
         self.edgesTracker = []
         self.selectedCorner = None
         self.isAfterDelete = False
-        return
-
-    def loadPoints(self, scenePath):
-        points = []
-        segmentation = []
-        planeNumPoints = 0 #np.zeros(self.numPlanes)
-        # with open(scenePath + '/annotation/planes.ply') as f:
-        #     lineIndex = 0
-        #     for line in f:
-        #         if lineIndex >= 12:
-        #             values = [token for token in line.strip().split(' ') if token.strip() != '']
-        #             if len(values) != 6:
-        #                 break
-        #             points.append(np.array([float(token) for token in values[:3]]))
-        #             indices = [int(value) for value in values[3:]]
-        #             if indices[0] == 255 and indices[1] == 255 and indices[2] == 255:
-        #                 planeIndex = -1
-        #             else:
-        #                 assert((indices[0] * 256 * 256 + indices[1] * 256 + indices[2]) % 100 == 0)
-        #                 planeIndex = (indices[0] * 256 * 256 + indices[1] * 256 + indices[2]) / 100 - 1
-        #                 planeNumPoints[planeIndex] += 1
-        #                 pass
-        #             segmentation.append(planeIndex)
-        #             pass
-        #         lineIndex += 1
-        #         continue
-        #     pass
-        self.points = np.array(points)
-        self.segmentation = np.array(segmentation)
-        self.planeNumPoints = planeNumPoints
         return
 
     def paintLayout(self, painter, width, height, offsetX, offsetY):
@@ -144,17 +113,21 @@ class Scene():
         return
 
     def save(self):
-        scene_info = {'corners': self.corners, 'cornersOpp': self.cornersOpp, 'faces': self.faces, 'dominantNormals': self.dominantNormals}
-        np.save(self.scenePath + '/annotation/scene_info.npy', scene_info)
-        return
+        scene_info = {'layoutGraph': self.layoutGraph, 
+                      'isDisconnected': self.isDisconnected, 
+                      'edgesTracker': self.edgesTracker, 
+                      'selectedCorner': self.selectedCorner,
+                      'isAfterDelete': self.isAfterDelete}
+
+        np.save(self.scenePath, scene_info)
 
     def load(self):
-        scene_info = np.load(self.scenePath + '/annotation/scene_info.npy')[()]
-        self.corners = scene_info['corners']
-        self.cornersOpp = scene_info['cornersOpp']
-        self.faces = scene_info['faces']
-        self.dominantNormals = scene_info['dominantNormals']
-        return
+        scene_info = np.load(self.scenePath)[()]
+        self.layoutGraph = scene_info['layoutGraph']
+        self.isDisconnected = scene_info['isDisconnected']
+        self.edgesTracker = scene_info['edgesTracker']
+        self.selectedCorner = scene_info['selectedCorner']
+        self.isAfterDelete = scene_info['isAfterDelete']
 
     def removeCorner(self):
         aux_nbs = list(self.layoutGraph[self.selectedCorner])
@@ -269,89 +242,92 @@ class Scene():
             continue
         return
 
-    def exportPlyPoint(self):
-        with open('test/scene.ply', 'w') as f:
-            header = """ply
-            format ascii 1.0
-            element vertex """
-            header += str(len(self.faces) * 600)
-            header += """
-            property float x
-            property float y
-            property float z
-            property uchar red
-            property uchar green
-            property uchar blue
-            end_header
-            """
-            f.write(header)
 
-            cornerOffset = len(self.corners)
-            allCorners = np.concatenate([self.corners, self.cornersOpp], axis=0)
-            allFaces = copy.deepcopy(self.faces)
-            for faceIndex, face in enumerate(self.faces):
-                allFaces.append([cornerIndex + cornerOffset for cornerIndex in face])
-                for c in xrange(len(face)):
-                    allFaces.append([face[c], face[(c + 1) % len(face)], face[(c + 1) % len(face)] + cornerOffset, face[c] + cornerOffset])
-                    continue
-                continue
+#     todo: original code. maybe just delete below later.
 
-            for faceIndex, face in enumerate(allFaces):
-                color = self.colorMap[faceIndex]
-                faceCorners = np.array([allCorners[cornerIndex] for cornerIndex in face])
-                cooeficients = np.random.random((100, 4))
-                cooeficients /= np.maximum(cooeficients.sum(1, keepdims=True), 1e-4)
-                points = np.matmul(cooeficients, faceCorners)
-                for point in points:
-                    f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + ' ' + str(color[2]) + ' ' + str(color[1]) + ' ' + str(color[0]) + '\n')
-                    #f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
-                    continue
-                continue
-            f.close()
-            pass
-        return
+#     def exportPlyPoint(self):
+#         with open('test/scene.ply', 'w') as f:
+#             header = """ply
+#             format ascii 1.0
+#             element vertex """
+#             header += str(len(self.faces) * 600)
+#             header += """
+#             property float x
+#             property float y
+#             property float z
+#             property uchar red
+#             property uchar green
+#             property uchar blue
+#             end_header
+#             """
+#             f.write(header)
 
-    def exportPly(self):
+#             cornerOffset = len(self.corners)
+#             allCorners = np.concatenate([self.corners, self.cornersOpp], axis=0)
+#             allFaces = copy.deepcopy(self.faces)
+#             for faceIndex, face in enumerate(self.faces):
+#                 allFaces.append([cornerIndex + cornerOffset for cornerIndex in face])
+#                 for c in xrange(len(face)):
+#                     allFaces.append([face[c], face[(c + 1) % len(face)], face[(c + 1) % len(face)] + cornerOffset, face[c] + cornerOffset])
+#                     continue
+#                 continue
 
-        cornerOffset = len(self.corners)
-        allCorners = np.concatenate([self.corners, self.cornersOpp], axis=0)
-        allFaces = copy.deepcopy(self.faces)
-        for faceIndex, face in enumerate(self.faces):
-            allFaces.append([cornerIndex + cornerOffset for cornerIndex in face])
-            for c in xrange(len(face)):
-                allFaces.append([face[c], face[(c + 1) % len(face)], face[(c + 1) % len(face)] + cornerOffset, face[c] + cornerOffset])
-                continue
-            continue
+#             for faceIndex, face in enumerate(allFaces):
+#                 color = self.colorMap[faceIndex]
+#                 faceCorners = np.array([allCorners[cornerIndex] for cornerIndex in face])
+#                 cooeficients = np.random.random((100, 4))
+#                 cooeficients /= np.maximum(cooeficients.sum(1, keepdims=True), 1e-4)
+#                 points = np.matmul(cooeficients, faceCorners)
+#                 for point in points:
+#                     f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + ' ' + str(color[2]) + ' ' + str(color[1]) + ' ' + str(color[0]) + '\n')
+#                     #f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
+#                     continue
+#                 continue
+#             f.close()
+#             pass
+#         return
 
-        with open('test/scene.ply', 'w') as f:
-            header = """ply
-format ascii 1.0
-element vertex """
-            header += str(len(allCorners))
-            header += """
-property float x
-property float y
-property float z
-property uchar red
-property uchar green
-property uchar blue
-element face """
-            header += str(len(allFaces))
-            header += """
-property list uchar int vertex_index
-end_header
-"""
-            f.write(header)
+#     def exportPly(self):
 
-            for corner in allCorners:
-                f.write(str(corner[0]) + ' ' + str(corner[1]) + ' ' + str(corner[2]) + ' 255 0 0\n')
-                continue
+#         cornerOffset = len(self.corners)
+#         allCorners = np.concatenate([self.corners, self.cornersOpp], axis=0)
+#         allFaces = copy.deepcopy(self.faces)
+#         for faceIndex, face in enumerate(self.faces):
+#             allFaces.append([cornerIndex + cornerOffset for cornerIndex in face])
+#             for c in xrange(len(face)):
+#                 allFaces.append([face[c], face[(c + 1) % len(face)], face[(c + 1) % len(face)] + cornerOffset, face[c] + cornerOffset])
+#                 continue
+#             continue
 
-            for faceIndex, face in enumerate(allFaces):
-                #f.write('4 ' + str(face[0] + 1) + ' ' + str(face[1] + 1) + ' ' + str(face[2] + 1) + ' ' + str(face[3] + 1) + '\n')
-                f.write('4 ' + str(face[0]) + ' ' + str(face[1]) + ' ' + str(face[2]) + ' ' + str(face[3]) + '\n')
-                continue
-            f.close()
-            pass
-        return
+#         with open('test/scene.ply', 'w') as f:
+#             header = """ply
+# format ascii 1.0
+# element vertex """
+#             header += str(len(allCorners))
+#             header += """
+# property float x
+# property float y
+# property float z
+# property uchar red
+# property uchar green
+# property uchar blue
+# element face """
+#             header += str(len(allFaces))
+#             header += """
+# property list uchar int vertex_index
+# end_header
+# """
+#             f.write(header)
+
+#             for corner in allCorners:
+#                 f.write(str(corner[0]) + ' ' + str(corner[1]) + ' ' + str(corner[2]) + ' 255 0 0\n')
+#                 continue
+
+#             for faceIndex, face in enumerate(allFaces):
+#                 #f.write('4 ' + str(face[0] + 1) + ' ' + str(face[1] + 1) + ' ' + str(face[2] + 1) + ' ' + str(face[3] + 1) + '\n')
+#                 f.write('4 ' + str(face[0]) + ' ' + str(face[1]) + ' ' + str(face[2]) + ' ' + str(face[3]) + '\n')
+#                 continue
+#             f.close()
+#             pass
+#         return
 
