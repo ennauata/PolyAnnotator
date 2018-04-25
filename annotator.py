@@ -19,6 +19,7 @@ except ImportError:
     from PyQt4.QtCore import *
 
 import resources
+import os
 # Add internal libs
 from libs.constants import *
 from libs.lib import struct, newAction, newIcon, addActions, fmtShortcut, generateColorByText
@@ -125,12 +126,14 @@ class MainWindow(QMainWindow):
 
     def loadImageFolder(self,q):
         dir_ = QFileDialog.getExistingDirectory(None, 'Select a folder:', '~/', QFileDialog.ShowDirsOnly)
+        self.loadedFiles = sorted(os.listdir(dir_))
+        self.updateDock()        
         if dir_ != '':
-            self.canvas.imagePaths = glob.glob(str(dir_+'/*'))
+            pathofLoadedFiles = [os.path.join(str(dir_), filename) for filename in self.loadedFiles]
+
+            self.canvas.imagePaths = pathofLoadedFiles
             self.canvas.imageIndex = 0
             self.canvas.loadImage()
-        self.loadedFiles = sorted(os.listdir(dir_))
-        self.updateDock()
         return
 
     def updateDock(self):
