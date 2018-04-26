@@ -90,7 +90,7 @@ class Canvas(QWidget):
                     
                     boxCenter = np.array([self.margin_x+self.width/2.0, self.margin_y+self.height/2.0])
                     distFromCenter = (raw_point - boxCenter)*self.scale
-                    point = self.center * self.imageSize[0] + distFromCenter
+                    point = self.center * self.imageSize + distFromCenter
 
                     if self.mode == 'layout':
                         self.scene.addLayoutCorner(point)
@@ -115,7 +115,7 @@ class Canvas(QWidget):
                         
                         boxCenter = np.array([self.margin_x+self.width/2.0, self.margin_y+self.height/2.0])
                         distFromCenter = (raw_point - boxCenter)*self.scale
-                        point = self.center * self.imageSize[0] + distFromCenter
+                        point = self.center * self.imageSize + distFromCenter
                         self.scene.moveCorner(point)
                         self.repaint()
 
@@ -177,9 +177,9 @@ class Canvas(QWidget):
 
         if not self.hiding:
             if self.mode == 'layout':
-                self.scene.paintLayout(p, self.width, self.height, self.center*self.imageSize[0], self.scale, self.margin_x, self.margin_y)
+                self.scene.paintLayout(p, self.width, self.height, self.center*self.imageSize, self.scale, self.margin_x, self.margin_y)
             else:
-                self.scene.paintLayout(p, self.width, self.height, self.center*self.imageSize[0], self.scale, self.margin_x, self.margin_y)
+                self.scene.paintLayout(p, self.width, self.height, self.center*self.imageSize, self.scale, self.margin_x, self.margin_y)
             p.end()
         return
 
@@ -300,10 +300,18 @@ class Canvas(QWidget):
             self.images.append(cv2.imread(imagePath))
 
         if len(self.images) > 0:
+
+            # init graph
             scenePath = self._getScenePath(self.imagePaths[0])
             self.scene = Scene(scenePath)
-            self.imageSize = np.array([image.shape[:2] for image in self.images])
-            self.imageSize = np.stack([self.imageSize[:, 1], self.imageSize[:, 0]], axis=1)
+
+            # resize all images to the first images size
+            firstImageSize = self.images[0].shape
+            resized_images = []
+            for im in self.images:
+                resized_images.append(cv2.resize(im, (firstImageSize[0], firstImageSize[1])))
+            self.imageSize = (firstImageSize[0], firstImageSize[1])
+            self.images = resized_images
             self.initCoordinatesRandomly()
             self.repaint()
         return
@@ -357,18 +365,18 @@ class Canvas(QWidget):
         for imageIndex in xrange(2):
 
             # prevent overflow
-            mins = np.array([float(self.width*self.scale)/(2*(self.imageSize[imageIndex][0]-1)), float(self.height*self.scale)/(2*(self.imageSize[imageIndex][1]-1))])
-            maxs = np.array([1.0-float(self.width*self.scale)/(2*(self.imageSize[imageIndex][0]-1)), 1.0-float(self.height*self.scale)/(2*(self.imageSize[imageIndex][1]-1))])
+            mins = np.array([float(self.width*self.scale)/(2*(self.imageSize[0]-1)), float(self.height*self.scale)/(2*(self.imageSize[1]-1))])
+            maxs = np.array([1.0-float(self.width*self.scale)/(2*(self.imageSize[0]-1)), 1.0-float(self.height*self.scale)/(2*(self.imageSize[1]-1))])
 
             self.center = np.maximum(self.center, mins)
             self.center = np.minimum(self.center, maxs)
 
             # get coordinates for cropping
-            lt = [int(self.center[0] * (self.imageSize[imageIndex][0]-1) - (self.width/2)*self.scale), int(self.center[1] * (self.imageSize[imageIndex][1]-1) - (self.height/2)*self.scale)]
-            rb = [int(self.center[0] * (self.imageSize[imageIndex][0]-1) + (self.width/2)*self.scale), int(self.center[1] * (self.imageSize[imageIndex][1]-1) + (self.height/2)*self.scale)]
+            lt = [int(self.center[0] * (self.imageSize[0]-1) - (self.width/2)*self.scale), int(self.center[1] * (self.imageSize[1]-1) - (self.height/2)*self.scale)]
+            rb = [int(self.center[0] * (self.imageSize[0]-1) + (self.width/2)*self.scale), int(self.center[1] * (self.imageSize[1]-1) + (self.height/2)*self.scale)]
 
             patch = self.images[imageIndex][lt[1]: rb[1], lt[0]: rb[0]]
             cropped_im =  cv2.resize(patch, (self.width, self.height))
-            self.patchImages.append(QPixmap(QImage(cropped_im, self.width, self.height, self.width * 3, QImage.Format_RGB888)))
+            self.patchImages.append(QPixmap(QImage(cropped_im[:, :, ::-1].reshape(-1), self.width, self.height, self.width * 3, QImage.Format_RGB888)))
         return
 

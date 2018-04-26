@@ -211,7 +211,10 @@ class Scene():
         # check if is a new corner
         isNewEdge = False
         isNewCorner = True
-        currCorner = tuple(point.astype('int32'))
+        point = point.astype('int32')
+        currCorner = tuple(point)
+        print('point to add')
+        print(currCorner)
         for existingCorner in self.layoutGraph.keys():
             if np.linalg.norm(point - np.array(existingCorner)) < epsilon:
                 isNewCorner = False
