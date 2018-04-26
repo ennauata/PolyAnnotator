@@ -47,7 +47,7 @@ class MainWindow(QMainWindow):
 
         self.dataFolder = '/'
         self.zoomWidget = ZoomWidget()
-        
+        scroll = QScrollArea()
         self.canvas = Canvas()
         self.setCentralWidget(self.canvas)
 

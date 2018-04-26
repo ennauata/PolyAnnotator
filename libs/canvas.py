@@ -146,7 +146,7 @@ class Canvas(QWidget):
             else:
                 self.scale += 0.1
 
-            self.scale = min(self.scale, 20)
+            self.scale = min(self.scale, 10)
             self.scale = max(self.scale, 0.1)
             self.changeCoordinates()
             self.repaint()
@@ -251,9 +251,9 @@ class Canvas(QWidget):
         elif key == Qt.Key_Left:
             self.moveToPreviousImage()
         elif key == Qt.Key_Down:
-            self.moveToNextImage(5)
+            self.moveToNextImage()
         elif key == Qt.Key_Up:
-            self.moveToPreviousImage(5)
+            self.moveToPreviousImage()
         return
 
     def keyReleaseEvent(self, ev):
@@ -281,14 +281,18 @@ class Canvas(QWidget):
             continue
         return False
 
-    def moveToNextImage(self, delta=1):
-        self.imageIndex = min(self.imageIndex + delta, len(self.imagePaths) - 1)
-        self.loadImage()
+    def moveToNextImage(self):
+        self.imagePaths = self.imagePaths[1:] + [self.imagePaths[0]]
+        self.images = self.images[1:] + [self.images[0]]
+        self.cropPatches()
+        self.repaint()
         return
 
-    def moveToPreviousImage(self, delta=1):
-        self.imageIndex = max(self.imageIndex - delta, 0)
-        self.loadImage()
+    def moveToPreviousImage(self):
+        self.imagePaths = [self.imagePaths[-1]] + self.imagePaths[:-1]
+        self.images = [self.images[-1]] + self.images[:-1]
+        self.cropPatches()
+        self.repaint()
         return
 
     def loadImage(self):
