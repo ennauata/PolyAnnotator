@@ -35,30 +35,51 @@ class Scene():
         self.isAfterDelete = False
         return
 
-    def paintLayout(self, painter, width, height, offsetX, offsetY):
+    def paintLayout(self, painter, width, height, imCenter, scale, offsetX, offsetY):
 
-        
         color = QColor(self.colorMap[0][0], self.colorMap[0][1], self.colorMap[0][2])
         pen = QPen(color)
-        pen.setWidth(3)
-        painter.setPen(pen)
-        d = 10            
+        
+        # apply scale
+        d = 5 * (1.0/scale)
+        d = int(min(d, 10)) 
+        d = int(max(d, 1))       
+        penW = 2.0/scale
+        penW = int(max(penW, 1))
+        penW = int(min(penW, 3))
+
+        pen.setWidth(penW)
+        painter.setPen(pen)         
         corner_path = QPainterPath()
         boundary_path = QPainterPath()
+
+        # compute box center
+        wCenter = np.array([offsetX, offsetY]) + np.array([width/2.0, height/2.0])
 
         # draw all points in the graph
         for pt in self.layoutGraph.keys():
 
-        
-            point = QPoint(int(round(pt[0] + offsetX)), int(round(pt[1] + offsetY)))
-            if pt is not self.prevCorner:
-                corner_path.addEllipse(point, d / 2.0, d / 2.0)
+            distFromCenter = (pt-imCenter)/scale
+            # print('retrieved dist')
+            # print(distFromCenter)
+            if np.abs(distFromCenter[0]) < width/2.0 and np.abs(distFromCenter[1]) < height/2.0:
 
-            # draw all neighbours
-            for n_pt in self.layoutGraph[pt]:
-                n_point = QPoint(int(round(n_pt[0] + offsetX)), int(round(n_pt[1] + offsetY)))
-                boundary_path.moveTo(point)
-                boundary_path.lineTo(n_point)
+                
+                new_pt =  distFromCenter + wCenter
+                point = QPoint(int(new_pt[0]), int(new_pt[1]))
+
+                if pt is not self.prevCorner:
+                    corner_path.addEllipse(point, d / 2.0, d / 2.0)
+
+                # draw all neighbours
+                for n_pt in self.layoutGraph[pt]:
+                    distFromCenter = (n_pt-imCenter)/scale
+                    if np.abs(distFromCenter[0]) < width/2.0 and np.abs(distFromCenter[1]) < height/2.0:
+
+                        new_n_pt =  distFromCenter + wCenter
+                        n_point = QPoint(int(new_n_pt[0]), int(new_n_pt[1]))
+                        boundary_path.moveTo(point)
+                        boundary_path.lineTo(n_point)
 
         painter.drawPath(corner_path)
         painter.drawPath(boundary_path)
@@ -67,17 +88,19 @@ class Scene():
         if self.prevCorner is not None:
             color = QColor(self.colorMap[1][0], self.colorMap[1][1], self.colorMap[1][2])
             pen = QPen(color)
-            pen.setWidth(3)
+            pen.setWidth(penW)
             painter.setPen(pen)
-            d = 10
             corner_path = QPainterPath()
 
-            point = QPoint(int(round(self.prevCorner[0] + offsetX)), int(round(self.prevCorner[1] + offsetY)))
-            corner_path.addEllipse(point, d / 2.0, d / 2.0)
-            painter.drawPath(corner_path)
+            distFromCenter = (self.prevCorner-imCenter)/scale
+            if np.abs(distFromCenter[0]) < width/2.0 and np.abs(distFromCenter[1]) < height/2.0:
+                new_n_pt =  distFromCenter + wCenter
+                point = QPoint(int(new_n_pt[0]), int(new_n_pt[1]))
+                corner_path.addEllipse(point, d / 2.0, d / 2.0)
+                painter.drawPath(corner_path)
         return
 
-    def selectCorner(self, point, epsilon=10):
+    def selectCorner(self, point, epsilon=2):
         self.selectedCorner = None
         for corner in self.layoutGraph.keys():
             if np.linalg.norm(point - np.array(corner)) < epsilon:
@@ -183,12 +206,12 @@ class Scene():
         print('Graph Disconnected')
 
 
-    def addLayoutCorner(self, point, width, height, selectPlane=False, epsilon=10):
+    def addLayoutCorner(self, point, epsilon=2):
 
         # check if is a new corner
         isNewEdge = False
         isNewCorner = True
-        currCorner = tuple(point)
+        currCorner = tuple(point.astype('int32'))
         for existingCorner in self.layoutGraph.keys():
             if np.linalg.norm(point - np.array(existingCorner)) < epsilon:
                 isNewCorner = False
@@ -222,10 +245,6 @@ class Scene():
             self.edgesTracker.append((self.prevCorner, currCorner))
             self.isAfterDelete = False
         self.prevCorner = currCorner
-        return
-
-    def moveLayoutCorner(self, point):
-
         return
 
     def adjustHeight(self, heightDelta, opposite=False):
