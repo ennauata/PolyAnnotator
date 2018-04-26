@@ -37,6 +37,7 @@ class Canvas(QWidget):
 
     CREATE, EDIT = list(range(2))
     image = None
+    coordinatesChanged = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(Canvas, self).__init__(*args, **kwargs)
@@ -53,8 +54,8 @@ class Canvas(QWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.WheelFocus)
 
-        self.width = 1280
-        self.height = 960
+        self.width = 400
+        self.height = 400
 
         self.layout_width = 800
         self.layout_height = 800
@@ -74,7 +75,8 @@ class Canvas(QWidget):
         self.ctrlPressed = False
         self.shiftPressed = False
         self.imagePaths = []
-        self.image = None
+        self.images = []
+        self.patchImages = []
         return
 
     def mousePressEvent(self, ev):
@@ -87,6 +89,10 @@ class Canvas(QWidget):
                 self.scene.selectCorner(point)
             self.prevPoint = point
             self.repaint()
+
+        if Qt.RightButton & ev.buttons():
+            pos = self.transformPos(ev.pos(), moving=True)
+            self.prevPoint = QPointF(*pos)
         return
 
     def mouseMoveEvent(self, ev):
@@ -97,6 +103,17 @@ class Canvas(QWidget):
                 point = self.transformPos(ev.pos())
                 self.scene.moveCorner(point)
                 self.repaint()
+
+        elif Qt.RightButton & ev.buttons():
+            pos = self.transformPos(ev.pos(), moving=True)
+            screen_size = np.array([int(self.frameGeometry().width()), int(self.frameGeometry().height())])
+            deltas = (pos - np.array([self.prevPoint.x(), self.prevPoint.y()]))/np.array(screen_size)   
+            deltas = QPointF(*deltas)
+            self.center[0] += -deltas.x()
+            self.center[1] += -deltas.y()
+            self.changeCoordinates()
+            self.prevPoint = QPointF(*pos)
+            self.repaint()
         return
 
     def wheelEvent(self, ev):
@@ -131,25 +148,49 @@ class Canvas(QWidget):
             continue
         return
 
+    # def paintEvent(self, event):
+    #     if self.image is not None:
+    #         if (self.imageIndex == -1 or not self.image) and self.mode != 'layout':
+    #             return super(Canvas, self).paintEvent(event)
+    #         p = self._painter
+    #         p.begin(self)
+    #         p.setRenderHint(QPainter.Antialiasing)
+    #         p.setRenderHint(QPainter.HighQualityAntialiasing)
+    #         p.setRenderHint(QPainter.SmoothPixmapTransform)
+
+    #         if self.image is not None:
+    #             p.drawPixmap(self.offsetX, self.offsetY, self.image)
+
+    #         if not self.hiding:
+    #             if self.mode == 'layout':
+    #                 self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
+    #             else:
+    #                 self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
+
+    #         p.end()
+    #     return
+
     def paintEvent(self, event):
-        if self.image is not None:
-            if (self.imageIndex == -1 or not self.image) and self.mode != 'layout':
-                return super(Canvas, self).paintEvent(event)
-            p = self._painter
-            p.begin(self)
-            p.setRenderHint(QPainter.Antialiasing)
-            p.setRenderHint(QPainter.HighQualityAntialiasing)
-            p.setRenderHint(QPainter.SmoothPixmapTransform)
+        if len(self.patchImages) == 0:
+            return super(Canvas, self).paintEvent(event)
+        p = self._painter
+        p.begin(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.HighQualityAntialiasing)
+        p.setRenderHint(QPainter.SmoothPixmapTransform)
+        margin_x = 0.1 * self.frameGeometry().width()
+        margin_y = 0.2 * self.frameGeometry().height()
+        p.drawPixmap(margin_x, margin_y, self.patchImages[0])
+        p.drawPixmap(self.width + margin_x + 20, margin_y, self.patchImages[1])
 
-            if self.image is not None:
-                p.drawPixmap(self.offsetX, self.offsetY, self.image)
+        # if self.image is not None:
+        #     p.drawPixmap(self.offsetX, self.offsetY, self.image)
 
-            if not self.hiding:
-                if self.mode == 'layout':
-                    self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
-                else:
-                    self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
-
+        if not self.hiding:
+            if self.mode == 'layout':
+                self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
+            else:
+                self.scene.paintLayout(p, self.layout_width, self.layout_height, self.offsetX, self.offsetY)
             p.end()
         return
 
@@ -262,13 +303,15 @@ class Canvas(QWidget):
         return
 
     def loadImage(self):
-        if len(self.imagePaths) > 0:
-            imPath = self.imagePaths[self.imageIndex]
-            scenePath = self._getScenePath(imPath)
+        for imagePath in self.imagePaths:
+            self.images.append(cv2.imread(imagePath))
+
+        if len(self.images) > 0:
+            scenePath = self._getScenePath(self.imagePaths[0])
             self.scene = Scene(scenePath)
-            image = cv2.imread(imPath)
-            image = cv2.resize(image, (self.layout_width, self.layout_height)) 
-            self.image = QPixmap(QImage(image[:, :, ::-1].reshape(-1), self.layout_width, self.layout_height, self.layout_width * 3, QImage.Format_RGB888))
+            self.imageSize = np.array([image.shape[:2] for image in self.images])
+            self.imageSize = np.stack([self.imageSize[:, 1], self.imageSize[:, 0]], axis=1)
+            self.initCoordinatesRandomly()
             self.repaint()
         return
 
@@ -298,3 +341,41 @@ class Canvas(QWidget):
         if self.image:
             return self.image.size()
         return super(Canvas, self).minimumSizeHint()
+
+    def setCenter(self, center):
+        self.center = np.array(center)
+        self.changeCoordinates()
+        return
+
+    def initCoordinatesRandomly(self):
+        self.center = np.array([0.5, 0.5])
+        self.changeCoordinates()
+        return
+
+    def changeCoordinates(self):
+
+        self.cropPatches()
+        self.coordinatesChanged.emit()
+        return
+
+    def cropPatches(self, background = False):
+
+        self.patchImages = []
+        for imageIndex in xrange(2):
+
+            # prevent overflow
+            mins = np.array([float(self.width)/(2*(self.imageSize[imageIndex][0]-1)), float(self.height)/(2*(self.imageSize[imageIndex][1]-1))])
+            maxs = np.array([1.0-float(self.width)/(2*(self.imageSize[imageIndex][0]-1)), 1.0-float(self.height)/(2*(self.imageSize[imageIndex][1]-1))])
+
+            self.center = np.maximum(self.center, mins)
+            self.center = np.minimum(self.center, maxs)
+
+            # get coordinates for cropping
+            lt = [int(self.center[0] * (self.imageSize[imageIndex][0]-1) - self.width/2), int(self.center[1] * (self.imageSize[imageIndex][1]-1) - self.height/2)]
+            rb = [int(self.center[0] * (self.imageSize[imageIndex][0]-1) + self.width/2), int(self.center[1] * (self.imageSize[imageIndex][1]-1) + self.height/2)]
+
+            patch = self.images[imageIndex][lt[1]: rb[1], lt[0]: rb[0]]
+            cropped_im =  cv2.resize(patch, (self.width, self.height))
+            self.patchImages.append(QPixmap(QImage(cropped_im, self.width, self.height, self.width * 3, QImage.Format_RGB888)))
+        return
+
