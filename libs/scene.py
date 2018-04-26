@@ -213,15 +213,14 @@ class Scene():
         isNewCorner = True
         point = point.astype('int32')
         currCorner = tuple(point)
-        print('point to add')
-        print(currCorner)
+
         for existingCorner in self.layoutGraph.keys():
             if np.linalg.norm(point - np.array(existingCorner)) < epsilon:
                 isNewCorner = False
                 currCorner = existingCorner
 
         # graph is currently connected
-        if self.prevCorner is not None:
+        if self.prevCorner is not None and self.prevCorner is not currCorner:
 
             # closing one edge with a new node
             if isNewCorner:
