@@ -27,6 +27,7 @@ CURSOR_DRAW = Qt.CrossCursor
 CURSOR_MOVE = Qt.ClosedHandCursor
 CURSOR_GRAB = Qt.OpenHandCursor
 
+
 # class Canvas(QGLWidget):
 
 
@@ -45,10 +46,6 @@ class Canvas(QWidget):
 
         self.prevPoint = QPointF()
         self._painter = QPainter()
-        self.sceneDir = './scenes'
-
-        if not os.path.exists(self.sceneDir):
-            os.mkdir(self.sceneDir)
 
         # Set widget options.
         self.setMouseTracking(True)
@@ -85,11 +82,11 @@ class Canvas(QWidget):
 
             # disable click ouside of region
             raw_point = self.transformPos(ev.pos())
-            if  self.margin_x < raw_point[0] < self.margin_x+self.width:
-                if self.margin_y < raw_point[1] < self.margin_y+self.height: 
-                    
-                    boxCenter = np.array([self.margin_x+self.width/2.0, self.margin_y+self.height/2.0])
-                    distFromCenter = (raw_point - boxCenter)*self.scale
+            if self.margin_x < raw_point[0] < self.margin_x + self.width:
+                if self.margin_y < raw_point[1] < self.margin_y + self.height:
+
+                    boxCenter = np.array([self.margin_x + self.width / 2.0, self.margin_y + self.height / 2.0])
+                    distFromCenter = (raw_point - boxCenter) * self.scale
                     point = self.center * self.imageSize + distFromCenter
 
                     if self.mode == 'layout':
@@ -110,11 +107,10 @@ class Canvas(QWidget):
         if (Qt.LeftButton & ev.buttons()):
             if self.mode == 'move':
                 raw_point = self.transformPos(ev.pos())
-                if  self.margin_x < raw_point[0] < self.margin_x+self.width:
-                    if self.margin_y < raw_point[1] < self.margin_y+self.height: 
-                        
-                        boxCenter = np.array([self.margin_x+self.width/2.0, self.margin_y+self.height/2.0])
-                        distFromCenter = (raw_point - boxCenter)*self.scale
+                if self.margin_x < raw_point[0] < self.margin_x + self.width:
+                    if self.margin_y < raw_point[1] < self.margin_y + self.height:
+                        boxCenter = np.array([self.margin_x + self.width / 2.0, self.margin_y + self.height / 2.0])
+                        distFromCenter = (raw_point - boxCenter) * self.scale
                         point = self.center * self.imageSize + distFromCenter
                         self.scene.moveCorner(point)
                         self.repaint()
@@ -122,14 +118,13 @@ class Canvas(QWidget):
         elif Qt.RightButton & ev.buttons():
             pos = self.transformPos(ev.pos(), moving=True)
             screen_size = np.array([int(self.frameGeometry().width()), int(self.frameGeometry().height())])
-            deltas = (pos - np.array([self.prevPoint.x(), self.prevPoint.y()]))/np.array(screen_size)   
+            deltas = (pos - np.array([self.prevPoint.x(), self.prevPoint.y()])) / np.array(screen_size)
             deltas = QPointF(*deltas)
-
 
             # decrease speed if zoomed in
             if self.scale < 1:
-                self.center[0] += -deltas.x()*self.scale**2
-                self.center[1] += -deltas.y()*self.scale**2
+                self.center[0] += -deltas.x() * self.scale ** 2
+                self.center[1] += -deltas.y() * self.scale ** 2
             else:
                 self.center[0] += -deltas.x()
                 self.center[1] += -deltas.y()
@@ -164,6 +159,7 @@ class Canvas(QWidget):
                 break
             continue
         return
+
     def paintEvent(self, event):
         if len(self.patchImages) == 0:
             return super(Canvas, self).paintEvent(event)
@@ -177,9 +173,11 @@ class Canvas(QWidget):
 
         if not self.hiding:
             if self.mode == 'layout':
-                self.scene.paintLayout(p, self.width, self.height, self.center*self.imageSize, self.scale, self.margin_x, self.margin_y)
+                self.scene.paintLayout(p, self.width, self.height, self.center * self.imageSize, self.scale,
+                                       self.margin_x, self.margin_y)
             else:
-                self.scene.paintLayout(p, self.width, self.height, self.center*self.imageSize, self.scale, self.margin_x, self.margin_y)
+                self.scene.paintLayout(p, self.width, self.height, self.center * self.imageSize, self.scale,
+                                       self.margin_x, self.margin_y)
             p.end()
         return
 
@@ -188,10 +186,8 @@ class Canvas(QWidget):
 
         return np.array([float(point.x()), float(point.y())])
 
-
     def closeEnough(self, p1, p2):
         return distance(p1 - p2) < self.epsilon
-
 
     def keyPressEvent(self, ev):
         key = ev.key()
@@ -229,12 +225,12 @@ class Canvas(QWidget):
                 self.repaint()
                 pass
         elif key == Qt.Key_H:
-            #and Qt.ControlModifier == int(ev.modifiers()):
+            # and Qt.ControlModifier == int(ev.modifiers()):
             self.hiding = not self.hiding
             self.repaint()
         elif key == Qt.Key_A:
             print(self.mode)
-            #if self.mode != 'layout':
+            # if self.mode != 'layout':
             if self.mode == 'layout':
                 self.mode = 'move'
                 print('Move Mode')
@@ -264,16 +260,6 @@ class Canvas(QWidget):
         self.shiftPressed = False
         return
 
-    def setCurrentLabel(self, label):
-        self.currentLabel = label
-        return
-
-    def loadCorners(self, corners):
-        self.corners = list(corners)
-        self.current = None
-        self.currentGroup = currentGroup
-        self.repaint()
-
     def onPoint(self, pos):
         for corner in self.corners:
             if corner.nearestVertex(pos, self.epsilon) is not None:
@@ -295,15 +281,14 @@ class Canvas(QWidget):
         self.repaint()
         return
 
-    def loadImage(self):
+    def loadImage(self, annotDir):
         for imagePath in self.imagePaths:
             self.images.append(cv2.imread(imagePath))
 
         if len(self.images) > 0:
 
-            # init graph
-            scenePath = self._getScenePath(self.imagePaths[0])
-            self.scene = Scene(scenePath)
+            # scenePath = self._getScenePath(self.imagePaths[0])
+            self.scene = Scene(annotDir)
 
             # resize all images to the first images size
             firstImageSize = self.images[0].shape
@@ -316,19 +301,13 @@ class Canvas(QWidget):
             self.repaint()
         return
 
-    def _getScenePath(self, imPath):
-        filename = os.path.basename(imPath)
-        filename_no_ext, _ = os.path.splitext(filename)
-        scene_name = filename_no_ext + '_scene.npy'
-        scene_path = os.path.join(self.sceneDir, scene_name)
-        return scene_path
+    def updateActivatedAnnotation(self, annotFilename):
+        self.scene.updateActivatedAnnotation(annotFilename)
+        self.repaint()
 
     def save(self):
-        self.scene.save()
-
-    def load(self):
-        self.scene.load()
-        self.repaint()
+        import time
+        self.scene.savelatestSample('annot- ' + str(time.time()))
 
     def removeLastPoint(self):
         self.corners = self.corners[:-1]
@@ -354,29 +333,31 @@ class Canvas(QWidget):
         return
 
     def changeCoordinates(self):
-
         self.cropPatches()
         self.coordinatesChanged.emit()
         return
 
-    def cropPatches(self, background = False):
-
+    def cropPatches(self, background=False):
         self.patchImages = []
         for imageIndex in xrange(2):
-
             # prevent overflow
-            mins = np.array([float(self.width*self.scale)/(2*(self.imageSize[0]-1)), float(self.height*self.scale)/(2*(self.imageSize[1]-1))])
-            maxs = np.array([1.0-float(self.width*self.scale)/(2*(self.imageSize[0]-1)), 1.0-float(self.height*self.scale)/(2*(self.imageSize[1]-1))])
+            mins = np.array([float(self.width * self.scale) / (2 * (self.imageSize[0] - 1)),
+                             float(self.height * self.scale) / (2 * (self.imageSize[1] - 1))])
+            maxs = np.array([1.0 - float(self.width * self.scale) / (2 * (self.imageSize[0] - 1)),
+                             1.0 - float(self.height * self.scale) / (2 * (self.imageSize[1] - 1))])
 
             self.center = np.maximum(self.center, mins)
             self.center = np.minimum(self.center, maxs)
 
             # get coordinates for cropping
-            lt = [int(self.center[0] * (self.imageSize[0]-1) - (self.width/2)*self.scale), int(self.center[1] * (self.imageSize[1]-1) - (self.height/2)*self.scale)]
-            rb = [int(self.center[0] * (self.imageSize[0]-1) + (self.width/2)*self.scale), int(self.center[1] * (self.imageSize[1]-1) + (self.height/2)*self.scale)]
+            lt = [int(self.center[0] * (self.imageSize[0] - 1) - (self.width / 2) * self.scale),
+                  int(self.center[1] * (self.imageSize[1] - 1) - (self.height / 2) * self.scale)]
+            rb = [int(self.center[0] * (self.imageSize[0] - 1) + (self.width / 2) * self.scale),
+                  int(self.center[1] * (self.imageSize[1] - 1) + (self.height / 2) * self.scale)]
 
             patch = self.images[imageIndex][lt[1]: rb[1], lt[0]: rb[0]]
-            cropped_im =  cv2.resize(patch, (self.width, self.height))
-            self.patchImages.append(QPixmap(QImage(cropped_im[:, :, ::-1].reshape(-1), self.width, self.height, self.width * 3, QImage.Format_RGB888)))
+            cropped_im = cv2.resize(patch, (self.width, self.height))
+            self.patchImages.append(QPixmap(
+                QImage(cropped_im[:, :, ::-1].reshape(-1), self.width, self.height, self.width * 3,
+                       QImage.Format_RGB888)))
         return
-
