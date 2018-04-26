@@ -91,6 +91,7 @@ class Scene():
         np.save(save_path, sample_info)
         self.updateGraph(self.layoutGraph)
         self.resetLatest()
+        self.loadAllGraphs()
 
     def paintLayout(self, painter, width, height, imCenter, scale, offsetX, offsetY):
         color = QColor(self.colorMap[0][0], self.colorMap[0][1], self.colorMap[0][2])
