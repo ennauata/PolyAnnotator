@@ -96,7 +96,7 @@ class Scene():
         self.loadAllGraphs()
 
     def paintLayout(self, painter, width, height, imCenter, scale, offsetX, offsetY):
-        color = [QColor(self.colorMap[10][0], self.colorMap[10][1], self.colorMap[10][2]), QColor(self.colorMap[0][0], self.colorMap[0][1], self.colorMap[0][2])]
+        color = [QColor(self.colorMap[2][0], self.colorMap[2][1], self.colorMap[2][2]), QColor(self.colorMap[0][0], self.colorMap[0][1], self.colorMap[0][2])]
         pens = [QPen(color[0]), QPen(color[1])]
 
         # apply scale

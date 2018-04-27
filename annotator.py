@@ -72,13 +72,11 @@ class MainWindow(QMainWindow):
         loadAnnotDir = QAction("Open Annotation Folder", self)
         save = QAction("Save Annotation", self)
         save.setShortcut('Ctrl+S')
-        # load = QAction("Load Annotation", self)
         quit = QAction("Close Annotator", self)
 
-        file.addAction(save)
-        # file.addAction(load)
         file.addAction(loadDir)
         file.addAction(loadAnnotDir)
+        file.addAction(save)
         file.addAction(quit)
 
         # set actions
