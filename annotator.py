@@ -108,10 +108,11 @@ class MainWindow(QMainWindow):
 
     def loadImageFolder(self, q):
         dir_ = QFileDialog.getExistingDirectory(None, 'Select a folder:', '~/', QFileDialog.ShowDirsOnly)
-        self.imageDir = dir_
-        self.loadedFiles = sorted(os.listdir(dir_))
+        
         # self.updateDock()        
         if dir_ != '':
+            self.imageDir = dir_
+            self.loadedFiles = sorted(os.listdir(dir_))
             pathofLoadedFiles = [os.path.join(str(dir_), filename) for filename in self.loadedFiles]
 
             self.canvas.imagePaths = pathofLoadedFiles
