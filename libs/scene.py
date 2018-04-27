@@ -45,11 +45,12 @@ class Scene():
         self.isAfterDelete = False
 
     def loadAllGraphs(self):
-        self.annotFiles = sorted(os.listdir(self.annotDir))
-        self.annotPaths = [os.path.join(self.annotDir, filename) for filename in self.annotFiles]
-        for filePath in self.annotPaths:
-            singleGraph = self.loadGraph(filePath)
-            self.updateGraph(singleGraph)
+        if self.annotDir is not None:
+            self.annotFiles = sorted(os.listdir(self.annotDir))
+            self.annotPaths = [os.path.join(self.annotDir, filename) for filename in self.annotFiles]
+            for filePath in self.annotPaths:
+                singleGraph = self.loadGraph(filePath)
+                self.updateGraph(singleGraph)
 
     def loadGraph(self, filePath):
         sampleInfo = np.load(filePath)[()]
@@ -87,6 +88,7 @@ class Scene():
                        'selectedCorner': self.selectedCorner,
                        'isAfterDelete': self.isAfterDelete,
                        'prevCorner': self.prevCorner}
+
         save_path = os.path.join(self.annotDir, filename)
         np.save(save_path, sample_info)
         self.updateGraph(self.layoutGraph)

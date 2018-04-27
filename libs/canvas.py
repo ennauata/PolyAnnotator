@@ -35,7 +35,7 @@ class Canvas(QWidget):
     newCorner = pyqtSignal()
     cornerMoved = pyqtSignal()
     drawing = pyqtSignal(bool)
-
+    
     CREATE, EDIT = list(range(2))
     image = None
     coordinatesChanged = pyqtSignal()
@@ -46,6 +46,7 @@ class Canvas(QWidget):
 
         self.prevPoint = QPointF()
         self._painter = QPainter()
+        self.scene = None
 
         # Set widget options.
         self.setMouseTracking(True)
@@ -76,9 +77,13 @@ class Canvas(QWidget):
         self.margin_y = 0.25 * self.frameGeometry().height()
         return
 
+    def initAnnot(self, annotDir):
+        self.scene = Scene(annotDir)
+        return
+
     def mousePressEvent(self, ev):
 
-        if ev.button() == Qt.LeftButton and self.images is not None:
+        if (ev.button() == Qt.LeftButton) and (self.images is not None) and (self.scene is not None):
 
             # disable click ouside of region
             raw_point = self.transformPos(ev.pos())
@@ -104,7 +109,7 @@ class Canvas(QWidget):
     def mouseMoveEvent(self, ev):
         """Update line with last point and current coordinates."""
 
-        if (Qt.LeftButton & ev.buttons()):
+        if (Qt.LeftButton & ev.buttons()) and self.scene is not None:
             if self.mode == 'move':
                 raw_point = self.transformPos(ev.pos())
                 if self.margin_x < raw_point[0] < self.margin_x + self.width:
@@ -171,14 +176,14 @@ class Canvas(QWidget):
         p.drawPixmap(self.margin_x, self.margin_y, self.patchImages[0])
         p.drawPixmap(self.width + self.margin_x + 20, self.margin_y, self.patchImages[1])
 
-        if not self.hiding:
+        if not self.hiding and self.scene is not None:
             if self.mode == 'layout':
                 self.scene.paintLayout(p, self.width, self.height, self.center * self.imageSize, self.scale,
                                        self.margin_x, self.margin_y)
             else:
                 self.scene.paintLayout(p, self.width, self.height, self.center * self.imageSize, self.scale,
                                        self.margin_x, self.margin_y)
-            p.end()
+        p.end()
         return
 
     def transformPos(self, point, moving=False):
@@ -283,9 +288,6 @@ class Canvas(QWidget):
             self.images.append(cv2.imread(imagePath))
 
         if len(self.images) > 0:
-
-            # scenePath = self._getScenePath(self.imagePaths[0])
-            self.scene = Scene(annotDir)
 
             # resize all images to the first images size
             firstImageSize = self.images[0].shape

@@ -48,10 +48,7 @@ class MainWindow(QMainWindow):
         settings = self.settings
 
         # init annotation dir
-        self.annotDir = './annotations'
-        if not os.path.isdir(self.annotDir):
-            os.mkdir(self.annotDir)
-            print('create dir {} for saving annotations'.format(self.annotDir))
+        self.annotDir = None
 
         # init image dir, wait to be set by user in self.loadImagefolder
         self.imageDir = None
@@ -72,6 +69,7 @@ class MainWindow(QMainWindow):
         bar = self.menuBar()
         file = bar.addMenu("File")
         loadDir = QAction("Open Image Folder", self)
+        loadAnnotDir = QAction("Open Annotation Folder", self)
         save = QAction("Save Annotation", self)
         save.setShortcut('Ctrl+S')
         # load = QAction("Load Annotation", self)
@@ -80,10 +78,12 @@ class MainWindow(QMainWindow):
         file.addAction(save)
         # file.addAction(load)
         file.addAction(loadDir)
+        file.addAction(loadAnnotDir)
         file.addAction(quit)
 
         # set actions
         loadDir.triggered.connect(self.loadImageFolder)
+        loadAnnotDir.triggered.connect(self.loadAnnotFolder)
         save.triggered.connect(self.save)
         # load.triggered.connect(self.canvas.load)
         quit.triggered.connect(self.quitApp)
@@ -93,7 +93,6 @@ class MainWindow(QMainWindow):
         # add navigation sidebar 
         self.items = QDockWidget("Annotations", self)
         self.annotList = QListWidget()
-        self.updateAnnotationDock()
         self.annotList.itemActivated.connect(self.updateActivatedAnnotation)
         self.items.setWidget(self.annotList)
         self.items.setFloating(False)
@@ -122,10 +121,25 @@ class MainWindow(QMainWindow):
             self.canvas.loadImage(self.annotDir)
         return
 
+    def loadAnnotFolder(self):
+        dir_ = QFileDialog.getExistingDirectory(None, 'Select a folder:', '~/', QFileDialog.ShowDirsOnly)
+        
+        # self.updateDock()        
+        if dir_ != '':
+            self.annotDir = str(dir_)
+            self.canvas.initAnnot(self.annotDir)
+            self.updateAnnotationDock()
+            self.canvas.repaint()
+        return
+
     def save(self):
-        self.canvas.save()
-        self.canvas.repaint()
-        self.updateAnnotationDock()
+        if self.annotDir is not None:
+
+            self.canvas.save()
+            self.canvas.repaint()
+            self.updateAnnotationDock()
+        else:
+            self.loadAnnotFolder()
 
     def updateAnnotationDock(self):
         self.annotList.clear()
