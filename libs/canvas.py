@@ -238,10 +238,7 @@ class Canvas(QWidget):
                 self.mode = 'layout'
                 print('Layout Mode')
             print(self.mode)
-        elif key == Qt.Key_S:
-            if self.ctrlPressed:
-                print('save')
-                self.scene.save()
+
         elif key == Qt.Key_Right:
             self.moveToNextImage()
         elif key == Qt.Key_Left:

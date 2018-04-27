@@ -73,6 +73,7 @@ class MainWindow(QMainWindow):
         file = bar.addMenu("File")
         loadDir = QAction("Open Image Folder", self)
         save = QAction("Save Annotation", self)
+        save.setShortcut('Ctrl+S')
         # load = QAction("Load Annotation", self)
         quit = QAction("Close Annotator", self)
 
@@ -123,6 +124,7 @@ class MainWindow(QMainWindow):
 
     def save(self):
         self.canvas.save()
+        self.canvas.repaint()
         self.updateAnnotationDock()
 
     def updateAnnotationDock(self):

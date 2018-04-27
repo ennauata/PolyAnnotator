@@ -94,8 +94,8 @@ class Scene():
         self.loadAllGraphs()
 
     def paintLayout(self, painter, width, height, imCenter, scale, offsetX, offsetY):
-        color = QColor(self.colorMap[0][0], self.colorMap[0][1], self.colorMap[0][2])
-        pen = QPen(color)
+        color = [QColor(self.colorMap[10][0], self.colorMap[10][1], self.colorMap[10][2]), QColor(self.colorMap[0][0], self.colorMap[0][1], self.colorMap[0][2])]
+        pens = [QPen(color[0]), QPen(color[1])]
 
         # apply scale
         d = 5 * (1.0 / scale)
@@ -105,31 +105,27 @@ class Scene():
         penW = int(max(penW, 1))
         penW = int(min(penW, 3))
 
-        pen.setWidth(penW)
-        painter.setPen(pen)
-        corner_path = QPainterPath()
-        boundary_path = QPainterPath()
+        pens[0].setWidth(penW)
+        pens[1].setWidth(penW)
+        
+        corner_paths = [QPainterPath(), QPainterPath()]
+        boundary_paths = [QPainterPath(), QPainterPath()]
 
         # compute box center
         wCenter = np.array([offsetX, offsetY]) + np.array([width / 2.0, height / 2.0])
 
-        # print('all')
-        # print(self.allGraph)
-
-        for graph in [self.allGraph, self.layoutGraph]:
+        for k, graph in enumerate([self.allGraph, self.layoutGraph]):
             # draw all points in the graph
             for pt in graph.keys():
 
                 distFromCenter = (pt - imCenter) / scale
-                # print('retrieved dist')
-                # print(distFromCenter)
                 if np.abs(distFromCenter[0]) < width / 2.0 and np.abs(distFromCenter[1]) < height / 2.0:
 
                     new_pt = distFromCenter + wCenter
                     point = QPoint(int(new_pt[0]), int(new_pt[1]))
 
                     if pt is not self.prevCorner:
-                        corner_path.addEllipse(point, d / 2.0, d / 2.0)
+                        corner_paths[k].addEllipse(point, d / 2.0, d / 2.0)
 
                     # draw all neighbours
                     for n_pt in graph[pt]:
@@ -137,11 +133,13 @@ class Scene():
                         if np.abs(distFromCenter[0]) < width / 2.0 and np.abs(distFromCenter[1]) < height / 2.0:
                             new_n_pt = distFromCenter + wCenter
                             n_point = QPoint(int(new_n_pt[0]), int(new_n_pt[1]))
-                            boundary_path.moveTo(point)
-                            boundary_path.lineTo(n_point)
+                            boundary_paths[k].moveTo(point)
+                            boundary_paths[k].lineTo(n_point)
 
-        painter.drawPath(corner_path)
-        painter.drawPath(boundary_path)
+
+            painter.setPen(pens[k]) 
+            painter.drawPath(corner_paths[k])
+            painter.drawPath(boundary_paths[k])
 
         # paint previous corner with another color
         if self.prevCorner is not None:
