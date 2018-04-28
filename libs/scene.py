@@ -2,6 +2,7 @@ import numpy as np
 import copy
 import os
 from utils import *
+import glob
 
 try:
     from PyQt5.QtGui import *
@@ -46,9 +47,8 @@ class Scene():
 
     def loadAllGraphs(self):
         if self.annotDir is not None:
-            self.annotFiles = sorted(os.listdir(self.annotDir))
-            self.annotPaths = [os.path.join(self.annotDir, filename) for filename in self.annotFiles]
-            for filePath in self.annotPaths:
+            self.annotFiles = sorted(glob.glob(os.path.join(self.annotDir, '*.p')))
+            for filePath in self.annotFiles:
                 singleGraph = self.loadGraph(filePath)
                 self.updateGraph(singleGraph)
 
