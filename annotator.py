@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
 
     def updateAnnotationDock(self):
         self.annotList.clear()
-        self.annotFiles = sorted(glob.glob(os.path.join(self.annotDir, '*.p')))
+        self.annotFiles = sorted(glob.glob(os.path.join(self.annotDir, '*.npy')))
         for filename in self.annotFiles:
             self.annotList.addItem(filename)
 

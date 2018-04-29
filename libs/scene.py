@@ -47,7 +47,7 @@ class Scene():
 
     def loadAllGraphs(self):
         if self.annotDir is not None:
-            self.annotFiles = sorted(glob.glob(os.path.join(self.annotDir, '*.p')))
+            self.annotFiles = sorted(glob.glob(os.path.join(self.annotDir, '*.npy')))
             for filePath in self.annotFiles:
                 singleGraph = self.loadGraph(filePath)
                 self.updateGraph(singleGraph)
