@@ -212,7 +212,6 @@ class Canvas(QWidget):
         else:
             self.shiftPressed = False
             pass
-
         if key == Qt.Key_D:
             self.scene.disconnectGraph()
         if key == Qt.Key_Delete:
@@ -285,15 +284,15 @@ class Canvas(QWidget):
 
     def loadImage(self, annotDir):
         for imagePath in self.imagePaths:
-            self.images.append(cv2.imread(imagePath))
+            self.images.append(Image.open(imagePath))
 
         if len(self.images) > 0:
 
             # resize all images to the first images size
-            firstImageSize = self.images[0].shape
+            firstImageSize = self.images[0].size
             resized_images = []
             for im in self.images:
-                resized_images.append(cv2.resize(im, (firstImageSize[0], firstImageSize[1])))
+                resized_images.append(im.resize((firstImageSize[0], firstImageSize[1])))
             self.imageSize = (firstImageSize[0], firstImageSize[1])
             self.images = resized_images
             self.initCoordinatesRandomly()
@@ -301,7 +300,16 @@ class Canvas(QWidget):
         return
 
     def updateActivatedAnnotation(self, annotFilename):
-        self.scene.updateActivatedAnnotation(annotFilename)
+        new_center = self.scene.updateActivatedAnnotation(annotFilename)
+        new_center = np.array(new_center).astype('float')/np.array(self.imageSize)
+        
+        center_min_lim = np.array([(self.width*self.scale/2.0)/self.imageSize[0], (self.height*self.scale/2.0)/self.imageSize[1]])
+        center_max_lim = np.array([1.0-(self.width*self.scale/2.0)/self.imageSize[0], 1.0-(self.height*self.scale/2.0)/self.imageSize[1]])  
+        
+        new_center = np.maximum(new_center, center_min_lim)
+        new_center = np.minimum(new_center, center_max_lim)
+
+        self.setCenter(new_center)
         self.repaint()
 
     def save(self):
@@ -354,9 +362,17 @@ class Canvas(QWidget):
             rb = [int(self.center[0] * (self.imageSize[0] - 1) + (self.width / 2) * self.scale),
                   int(self.center[1] * (self.imageSize[1] - 1) + (self.height / 2) * self.scale)]
 
-            patch = self.images[imageIndex][lt[1]: rb[1], lt[0]: rb[0]]
-            cropped_im = cv2.resize(patch, (self.width, self.height))
-            self.patchImages.append(QPixmap(
-                QImage(cropped_im[:, :, ::-1].reshape(-1), self.width, self.height, self.width * 3,
-                       QImage.Format_RGB888)))
+            patch = self.images[imageIndex].crop((lt[0], lt[1], rb[0], rb[1]))
+            cropped_im = patch.resize((self.width, self.height))
+            cropped_im = np.array(cropped_im)
+            if len(cropped_im.shape) > 2:
+                self.patchImages.append(QPixmap(
+                    QImage(cropped_im[:,:,:3].reshape(-1), self.width, self.height, self.width * 3,
+                           QImage.Format_RGB888)))
+            else:
+                cropped_im = cropped_im[:, :, np.newaxis]
+                cropped_im = np.tile(cropped_im, (1, 1, 3)).astype('uint8')
+                self.patchImages.append(QPixmap(
+                    QImage(cropped_im.reshape(-1), self.width, self.height, self.width * 3,
+                           QImage.Format_RGB888)))
         return

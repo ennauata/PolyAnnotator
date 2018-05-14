@@ -20,7 +20,7 @@ class Scene():
         self.numPlanes = 0  # self.planes.shape[0]
 
         self.colorMap = ColorPalette(1000).getColorMap()
-
+        self.activeAnnot = None
         self.annotDir = annotDir
         self.annotFiles = []
         self.annotPaths = []
@@ -68,7 +68,12 @@ class Scene():
 
     def updateActivatedAnnotation(self, annotFilename):
     	print('activate {}'.format(annotFilename))
-    	print(self.annotFiles)
+        
+        if self.activeAnnot is not None:
+            self.loadAllGraphs()
+
+        self.activeAnnot = annotFilename
+
         if annotFilename in self.annotFiles:
             annotPath = os.path.join(self.annotDir, str(annotFilename))
             sampleInfo = np.load(annotPath)[()]
@@ -78,8 +83,16 @@ class Scene():
             self.selectedCorner = sampleInfo['selectedCorner']
             self.isAfterDelete = sampleInfo['isAfterDelete']
             self.prevCorner = sampleInfo['prevCorner']
+
+            # remove graph from all_graphs
+            for pt in self.layoutGraph.keys():
+                if pt in self.allGraph.keys():
+                    del self.allGraph[pt]
+            return self.layoutGraph.keys()[0]
+
         else:
             raise ValueError("Can't find the annotation file {} in {}".format(annotFilename, self.annotDir))
+        return None
 
     def savelatestSample(self, filename):
         sample_info = {'graph': self.layoutGraph,
@@ -89,8 +102,19 @@ class Scene():
                        'isAfterDelete': self.isAfterDelete,
                        'prevCorner': self.prevCorner}
 
-        save_path = os.path.join(self.annotDir, filename)
-        np.save(save_path, sample_info)
+        if self.activeAnnot is not None:
+            save_path = os.path.join(self.annotDir, str(self.activeAnnot))
+
+        else:
+            save_path = os.path.join(self.annotDir, filename)
+        
+        if len(self.layoutGraph.keys()) > 0:
+            np.save(save_path, sample_info)
+        else:
+            if os.path.isfile(save_path):
+                os.remove(save_path)
+
+        self.activeAnnot = None
         self.updateGraph(self.layoutGraph)
         self.resetLatest()
         self.loadAllGraphs()
