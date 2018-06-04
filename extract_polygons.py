@@ -2,8 +2,6 @@
     This is for extracting all non-overlapping closed polygons in our annotations.
     Note that every extracted polygon never contains other polygons.
 """
-
-
 import numpy as np
 import os
 import os.path as osp
@@ -56,7 +54,6 @@ def DFS(start_v, current_v, graph, visited, stack, num_steps, isback, cycle_list
                 continue
 
             next_v = _next_adj_v(graph, current_v=current_v, next_v=next_v)
-            # print('4. next v is {}, steps {}'.format(next_v, num_steps))
 
         else:  # next_v is -1, no more path at current_v, need to backtrack
             isback = True
@@ -171,55 +168,6 @@ def _is_inside(cycle, other, i, j, areas):
             return False
 
     elif min_x_1 >= min_x_2 and max_x_1 <= max_x_2 and min_y_1 >= min_y_2 and max_y_1 <= max_y_2:
-        # print('0')
-        # if max_x_2 - max_x_1 <= EPSILON:
-            # print('1')
-            # cyc_list = _get_ys(cycle, max_x_1)
-            # other_list = _get_ys(other, max_x_2)
-            # for i in cyc_list:
-            #     if i not in other_list:
-            #         return False
-            # return True
-            # if _check_in(areas[i] + areas[j], areas):
-            #     return False
-            # else:
-            #     return True
-        # elif min_x_1 - min_x_2 <= EPSILON:
-            # print('2')
-            # cyc_list = _get_ys(cycle, min_x_1)
-            # other_list = _get_ys(cycle, min_x_2)
-            # for i in cyc_list:
-            #     if i not in other_list:
-            #         return False
-            # return True
-            # if _check_in(areas[i] + areas[j], areas):
-            #     return False
-            # else:
-            #     return True
-        # elif min_y_1 - min_y_2 <= EPSILON:
-            # print('3')
-            # cyc_list = _get_xs(cycle, min_y_1)
-            # other_list = _get_xs(other, min_y_2)
-            # for i in cyc_list:
-            #     if i not in other_list:
-            #         return False
-            # return True
-            # if _check_in(areas[i] + areas[j], areas):
-            #     return False
-            # else:
-            #     return True
-        # elif max_y_2 - max_y_1 <= EPSILON:
-            # print('4')
-            # cyc_list = _get_xs(cycle, max_y_1)
-            # other_list = _get_xs(other, max_y_2)
-            # for i in cyc_list:
-            #     if i not in other_list:
-            #         return False
-            # return True
-            # if _check_in(areas[i] + areas[j], areas):
-            #     return False
-            # else:
-            #     return True
         if _totally_inside(cycle, other):
             # if _is_outside(cycle, other):
 
@@ -312,8 +260,6 @@ if __name__ == '__main__':
 
     for filename in sorted(os.listdir(SOURCE_DIR)):
         file_path = osp.join(SOURCE_DIR, filename)
-        # if filename != 'annot- 1524966663.5.npy':
-        #     continue
         print(file_path)
         annot = np.load(file_path)[()]
         graph = annot['graph']
