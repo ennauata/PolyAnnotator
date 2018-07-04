@@ -73,37 +73,42 @@ for a_path in annot_paths:
             continue
 
         # get coords
-        margin = 20
-
         pts = np.array(graph.keys())
         xs = [pt[0] for pt in graph.keys()]
         ys = [pt[1] for pt in graph.keys()]
+        margin = 24
 
         lt = (np.min(xs)-margin, np.min(ys)-margin)
         rb = (np.max(xs)+margin, np.max(ys)+margin)
 
         # crop image
-        cr_im = rgb_im.crop((lt[0], lt[1], rb[0], rb[1]))
-        cr_dp_im = depth_im.crop((lt[0], lt[1], rb[0], rb[1]))
-        cr_gray_im = gray_im.crop((lt[0], lt[1], rb[0], rb[1]))
-        cr_surf_im = surf_im.crop((lt[0], lt[1], rb[0], rb[1]))
+        curr_size = np.array([rb[0]-lt[0], rb[1]-lt[1]])
+        new_size = np.max([np.max(curr_size), final_size])
+        x_c, y_c = (lt[0]+rb[0])/2, (lt[1]+rb[1])/2
 
-        # pad images
-        new_size = max(np.max(cr_im.size), final_size)
-        padded_im = pad_im(cr_im, new_size, final_size=256, bkg_color='white')
-        dp_padded_im = pad_im(cr_dp_im, new_size, final_size=256, bkg_color='black')
-        gr_padded_im = pad_im(cr_gray_im, new_size, final_size=256, bkg_color='black')
-        sf_padded_im = pad_im(cr_surf_im, new_size, final_size=256, bkg_color='white')
+        # distance from center
+        dist = new_size/2
+
+        # crop image
+        cr_im = rgb_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
+        cr_dp_im = depth_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
+        cr_gray_im = gray_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
+        cr_surf_im = surf_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
+
+        # padded_im = pad_im(cr_im, new_size, final_size=256, bkg_color='white')
+        # dp_padded_im = pad_im(cr_dp_im, new_size, final_size=256, bkg_color='black')
+        # gr_padded_im = pad_im(cr_gray_im, new_size, final_size=256, bkg_color='black')
+        # sf_padded_im = pad_im(cr_surf_im, new_size, final_size=256, bkg_color='white')
 
         # save images
-        padded_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/rgb/{}.jpg'.format(im_id))
-        dp_padded_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/depth/{}.jpg'.format(im_id))
-        gr_padded_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/gray/{}.jpg'.format(im_id))
-        sf_padded_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/surf/{}.jpg'.format(im_id))
+        cr_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/rgb/{}.jpg'.format(im_id))
+        cr_dp_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/depth/{}.jpg'.format(im_id))
+        cr_gray_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/gray/{}.jpg'.format(im_id))
+        cr_surf_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/surf/{}.jpg'.format(im_id))
 
         # transform annots
         shift_bb = np.array(lt)
-        shift = np.array([(new_size-cr_im.size[0])/2, (new_size-cr_im.size[1])/2])
+        shift = np.array([(new_size-curr_size[0])/2, (new_size-curr_size[1])/2])
         scale = float(final_size)/new_size
 
         trans_graph = {}
@@ -117,27 +122,24 @@ for a_path in annot_paths:
         np.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/annots/{}.npy'.format(im_id), trans_graph, 'bytes')
         
         # debug
-        #plt.imshow(dp_padded_im)
-        #plt.figure()
-        #dp_padded_im = np.array(dp_padded_im.convert('L'))
-        #sf_norm_im = compute_normal_from_depth(dp_padded_im)
-        #dp_padded_im = dp_padded_im*255.0/np.max(dp_padded_im)
+        
+        # plt.figure()
+        # cr_dp_im = np.array(cr_dp_im.convert('L'))
+        # sf_norm_im = compute_normal_from_depth(cr_dp_im)
+        # cr_dp_im = cr_dp_im*255.0/np.max(cr_dp_im)
 
-        # convert to PIL object
-        #dp_padded_im_norm = Image.fromarray(dp_padded_im.astype(np.uint8))
-        #sf_norm_im = Image.fromarray(sf_norm_im.astype(np.uint8))
+        # # convert to PIL object
+        # cr_dp_im_norm = Image.fromarray(cr_dp_im.astype(np.uint8))
+        # sf_norm_im = Image.fromarray(sf_norm_im.astype(np.uint8))
 
-
-        # draw = ImageDraw.Draw(sf_norm_im)
+        # draw = ImageDraw.Draw(cr_im)
         # for pt1 in trans_graph.keys():
         #     for pt2 in trans_graph[pt1]:
         #         draw.ellipse((pt1[0]-2, pt1[1]-2, pt1[0]+2, pt1[1]+2), fill='red')
         #         draw.ellipse((pt2[0]-2, pt2[1]-2, pt2[0]+2, pt2[1]+2), fill='red')    
         #         draw.line((pt1[0], pt1[1], pt2[0], pt2[1]), fill='blue', width=2)
-
+        # plt.imshow(cr_im)
         #plt.imshow(sf_norm_im)
         #plt.figure()
-        # plt.imshow(dp_padded_im_norm)
-        # plt.figure()
-        # plt.imshow(padded_im)
-        # plt.show()
+        #plt.imshow(cr_dp_im_norm.convert('RGB'))
+        #plt.show()
