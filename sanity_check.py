@@ -90,10 +90,10 @@ for a_path in annot_paths:
         dist = new_size/2
 
         # crop image
-        cr_im = rgb_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
-        cr_dp_im = depth_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
-        cr_gray_im = gray_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
-        cr_surf_im = surf_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS)
+        cr_im = rgb_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('RGB')
+        cr_dp_im = depth_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('L')
+        cr_gray_im = gray_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('L')
+        cr_surf_im = surf_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('RGB')
 
         # padded_im = pad_im(cr_im, new_size, final_size=256, bkg_color='white')
         # dp_padded_im = pad_im(cr_dp_im, new_size, final_size=256, bkg_color='black')
