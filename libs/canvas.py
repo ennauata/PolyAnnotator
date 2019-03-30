@@ -19,7 +19,7 @@ import os
 import glob
 
 sys.path.append('../code/')
-Image.MAX_IMAGE_PIXELS = 1000000000
+Image.MAX_IMAGE_PIXELS = None
 
 CURSOR_DEFAULT = Qt.ArrowCursor
 CURSOR_POINT = Qt.PointingHandCursor
@@ -29,8 +29,6 @@ CURSOR_GRAB = Qt.OpenHandCursor
 
 
 # class Canvas(QGLWidget):
-
-
 class Canvas(QWidget):
     newCorner = pyqtSignal()
     cornerMoved = pyqtSignal()

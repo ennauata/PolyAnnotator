@@ -3,6 +3,8 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
+import cv2
+
 Image.MAX_IMAGE_PIXELS = None
 
 def norm(v):
@@ -49,11 +51,13 @@ def compute_normal_from_depth(im_arr):
     return im_normal
 
 final_size = 256
-annot_paths = glob.glob('/media/nelson/Workspace1/Projects/building_reconstruction/2D_polygons_annotator/new_annots/*')
-rgb_im = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/high_res_la/aligned_images/rgb_aligned.tif')
-depth_im = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/high_res_la/aligned_images/norm_im_0.3m_aligned_raw.tif')
-gray_im = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/high_res_la/aligned_images/gray_aligned.tif')
-surf_im = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/high_res_la/aligned_images/surf_im_0.3m_aligned_raw.tif')
+annot_paths = glob.glob('/home/nelson/Workspace/dataset_atlanta/annots/*')
+rgb_im = Image.open('/home/nelson/Workspace/dataset_atlanta/src/high_res/rgb_render.jpg')
+
+print(rgb_im.getbands())
+# depth_im = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/high_res_la/aligned_images/norm_im_0.3m_aligned_raw.tif')
+# gray_im = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/high_res_la/aligned_images/gray_aligned.tif')
+# surf_im = Image.open('/media/nelson/Workspace1/Projects/building_reconstruction/high_res_la/aligned_images/surf_im_0.3m_aligned_raw.tif')
 
 for a_path in annot_paths:
     with open(a_path) as f:
@@ -91,24 +95,25 @@ for a_path in annot_paths:
 
         # crop image
         cr_im = rgb_im.crop((lt[0], lt[1], rb[0], rb[1])).convert('RGB')
-        cr_dp_im = depth_im.crop((lt[0], lt[1], rb[0], rb[1])).convert('L')
-        cr_gray_im = gray_im.crop((lt[0], lt[1], rb[0], rb[1])).convert('L')
-        cr_surf_im = surf_im.crop((lt[0], lt[1], rb[0], rb[1])).convert('RGB')
+        # cr_dp_im = depth_im.crop((lt[0], lt[1], rb[0], rb[1])).convert('L')
+        # cr_gray_im = gray_im.crop((lt[0], lt[1], rb[0], rb[1])).convert('L')
+        # cr_surf_im = surf_im.crop((lt[0], lt[1], rb[0], rb[1])).convert('RGB')
+
         # cr_im = rgb_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('RGB')
         # cr_dp_im = depth_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('L')
         # cr_gray_im = gray_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('L')
         # cr_surf_im = surf_im.crop((x_c-dist, y_c-dist, x_c+dist, y_c+dist)).resize((final_size, final_size), Image.ANTIALIAS).convert('RGB')
 
         cr_im = pad_im(cr_im, new_size, final_size=256, bkg_color='white')
-        cr_dp_im = pad_im(cr_dp_im, new_size, final_size=256, bkg_color='black')
-        cr_gray_im = pad_im(cr_gray_im, new_size, final_size=256, bkg_color='black')
-        cr_surf_im = pad_im(cr_surf_im, new_size, final_size=256, bkg_color='white')
+        # cr_dp_im = pad_im(cr_dp_im, new_size, final_size=256, bkg_color='black')
+        # cr_gray_im = pad_im(cr_gray_im, new_size, final_size=256, bkg_color='black')
+        # cr_surf_im = pad_im(cr_surf_im, new_size, final_size=256, bkg_color='white')
 
         # save images
-        cr_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/rgb/{}.jpg'.format(im_id))
-        cr_dp_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/depth/{}.jpg'.format(im_id))
-        cr_gray_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/gray/{}.jpg'.format(im_id))
-        cr_surf_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/surf/{}.jpg'.format(im_id))
+        cr_im.save('/home/nelson/Workspace/dataset_atlanta/processed/rgb/{}.jpg'.format(im_id))
+        # cr_dp_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/depth/{}.jpg'.format(im_id))
+        # cr_gray_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/gray/{}.jpg'.format(im_id))
+        # cr_surf_im.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/surf/{}.jpg'.format(im_id))
 
         # transform annots
         shift_bb = np.array(lt)
@@ -124,7 +129,7 @@ for a_path in annot_paths:
                 trans_graph[new_k].append(new_pt) 
 
 
-        np.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/annots/{}.npy'.format(im_id), trans_graph, 'bytes')
+        np.save('/home/nelson/Workspace/dataset_atlanta/processed/annots/{}.npy'.format(im_id), trans_graph, 'bytes')
 
         # compute gt outline
         im_out = Image.fromarray(np.zeros((256, 256))).convert('L')
@@ -132,7 +137,7 @@ for a_path in annot_paths:
         for pt1 in trans_graph.keys():
             for pt2 in trans_graph[pt1]:
                 draw.line((pt1[0], pt1[1], pt2[0], pt2[1]), fill='white', width=2)
-        im_out.save('/media/nelson/Workspace1/Projects/building_reconstruction/la_dataset/outline_gt/{}.jpg'.format(im_id))
+        im_out.save('/home/nelson/Workspace/dataset_atlanta/processed/outline_gt/{}.jpg'.format(im_id))
 
         # debug
         # plt.figure()
